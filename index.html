@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Elevate Mens Wear | Billing Suite</title>
+  <!-- Tailwind CSS + Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* custom smooth transitions and print-friendly subtle touches */
+    body {
+      background: #f4f2ef;
+    }
+    .bill-card {
+      transition: all 0.2s ease;
+    }
+    input:focus, button:focus {
+      outline: none;
+      ring: 2px solid #8b5a2b;
+    }
+    .whatsapp-btn {
+      background: #25D366;
+      transition: all 0.2s;
+    }
+    .whatsapp-btn:hover {
+      background: #128C7E;
+      transform: scale(1.02);
+    }
+    .item-table-scroll {
+      max-height: 340px;
+      overflow-y: auto;
+      display: block;
+    }
+    /* Custom number spinner hide for cleaner look */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button {
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased p-4 md:p-6">
+
+  <!-- Main Container -->
+  <div class="max-w-7xl mx-auto">
+    <!-- Header / Shop Identity -->
+    <div class="bg-white rounded-2xl shadow-md p-5 mb-6 flex flex-wrap justify-between items-center border-l-8 border-amber-700">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-800">👔 ELEVATE <span class="text-amber-800">MENS WEAR</span></h1>
+        <p class="text-gray-500 text-sm mt-1">Premium tailoring & streetwear | GST Ready</p>
+      </div>
+      <div class="text-right">
+        <i class="fas fa-receipt text-3xl text-amber-700"></i>
+        <p class="text-xs text-gray-400">digital invoice</p>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-6">
+      <!-- LEFT PANEL: Customer + Add Items + Discount (controls) -->
+      <div class="lg:col-span-2 space-y-5">
+        <!-- Customer Details Card -->
+        <div class="bg-white rounded-xl shadow p-5">
+          <h2 class="text-xl font-semibold border-b pb-2 flex items-center gap-2 text-gray-700"><i class="fas fa-user-circle text-amber-700"></i> Customer Details</h2>
+          <div class="mt-4 space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-600">Full Name *</label>
+              <input type="text" id="customerName" placeholder="e.g., Rajesh Khanna" class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600">WhatsApp / Mobile No. *</label>
+              <input type="tel" id="customerPhone" placeholder="+91 98765 43210" class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400">
+              <p class="text-xs text-gray-400 mt-1">Used to send bill via WhatsApp & invoice</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add New Item (user custom item) -->
+        <div class="bg-white rounded-xl shadow p-5">
+          <h2 class="text-xl font-semibold border-b pb-2 flex items-center gap-2 text-gray-700"><i class="fas fa-plus-circle text-amber-700"></i> Add New Item</h2>
+          <div class="mt-3 grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="text-sm text-gray-600">Item Name</label>
+              <input type="text" id="itemName" placeholder="e.g., Premium Denim, Polo Shirt" class="w-full border rounded-lg px-3 py-2 mt-1">
+            </div>
+            <div>
+              <label class="text-sm text-gray-600">Price (₹)</label>
+              <input type="number" id="itemPrice" placeholder="0.00" class="w-full border rounded-lg px-3 py-2 mt-1" step="0.01" min="0">
+            </div>
+            <div>
+              <label class="text-sm text-gray-600">Qty</label>
+              <input type="number" id="itemQty" placeholder="1" value="1" class="w-full border rounded-lg px-3 py-2 mt-1" min="1" step="1">
+            </div>
+          </div>
+          <button id="addItemBtn" class="mt-4 w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"><i class="fas fa-cart-plus"></i> Add to Bill</button>
+          
+          <!-- Quick Add Presets (mens wear essentials) -->
+          <div class="mt-5 pt-2 border-t border-dashed">
+            <p class="text-xs font-medium text-gray-500 mb-2">⚡ QUICK ADD (mens classics)</p>
+            <div class="flex flex-wrap gap-2">
+              <button data-quick="Shirt" data-price="899" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-tshirt"></i> Shirt ₹899</button>
+              <button data-quick="Pants" data-price="1299" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-shopping-bag"></i> Pants ₹1299</button>
+              <button data-quick="T-Shirt" data-price="599" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-tshirt"></i> T-Shirt ₹599</button>
+              <button data-quick="Jacket" data-price="2499" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-user-tie"></i> Jacket ₹2499</button>
+              <button data-quick="Shorts" data-price="649" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-swimming-pool"></i> Shorts ₹649</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discount Control -->
+        <div class="bg-white rounded-xl shadow p-5">
+          <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-700"><i class="fas fa-tags text-amber-700"></i> Discount</h2>
+          <div class="mt-2 flex items-center gap-3 flex-wrap">
+            <div class="flex-1">
+              <label class="text-sm text-gray-500">Discount (%)</label>
+              <input type="number" id="discountPercent" value="0" min="0" max="100" step="1" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div class="flex-1 text-right">
+              <p class="text-xs text-gray-400">Applied on subtotal</p>
+            </div>
+          </div>
+          <button id="clearAllItemsBtn" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition text-sm font-medium"><i class="fas fa-trash-alt"></i> Clear All Items</button>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL: BILL PREVIEW (Items, Totals & WhatsApp) -->
+      <div class="lg:col-span-3">
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden bill-card">
+          <!-- Bill Header -->
+          <div class="bg-gradient-to-r from-amber-800 to-amber-900 text-white px-5 py-4">
+            <div class="flex justify-between items-center flex-wrap">
+              <div>
+                <h2 class="text-2xl font-bold tracking-wide">🧾 TAX INVOICE</h2>
+                <p class="text-amber-200 text-sm">Elevate Mens Wear • Since 2024</p>
+              </div>
+              <div class="text-right text-sm">
+                <p id="billDate" class="font-mono"></p>
+                <p class="text-amber-200">Bill No: #ELV-<span id="billNumber">1001</span></p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Customer info row inside bill -->
+          <div class="px-5 pt-4 pb-2 bg-gray-50 border-b flex flex-wrap justify-between text-sm">
+            <div><span class="font-semibold">Customer:</span> <span id="displayCustomerName" class="text-gray-700">—</span></div>
+            <div><span class="font-semibold">Mobile:</span> <span id="displayCustomerPhone" class="text-gray-700">—</span></div>
+            <div><span class="font-semibold">Order Type:</span> Walk-in</div>
+          </div>
+
+          <!-- Items Table (dynamic list) -->
+          <div class="p-5">
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
+                  <tr>
+                    <th class="px-3 py-2 text-left">Item</th>
+                    <th class="px-3 py-2 text-right">Price (₹)</th>
+                    <th class="px-3 py-2 text-center">Qty</th>
+                    <th class="px-3 py-2 text-right">Total (₹)</th>
+                    <th class="px-3 py-2 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTableBody" class="divide-y divide-gray-200">
+                  <!-- dynamic rows injected -->
+                  <tr><td colspan="5" class="text-center py-6 text-gray-400">No items added. Add shirts, pants or custom items ➕</td></tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Totals & discount area -->
+            <div class="mt-6 border-t pt-4 flex flex-col items-end">
+              <div class="w-full md:w-72 space-y-2">
+                <div class="flex justify-between text-gray-600"><span>Subtotal :</span> <span id="subtotalValue">₹0.00</span></div>
+                <div class="flex justify-between text-gray-600"><span>Discount (<span id="discPercentLabel">0</span>%) :</span> <span class="text-red-600">- ₹<span id="discountAmount">0.00</span></span></div>
+                <div class="flex justify-between text-xl font-bold border-t pt-2 mt-1"><span>GRAND TOTAL :</span> <span id="grandTotalValue" class="text-amber-800">₹0.00</span></div>
+              </div>
+            </div>
+
+            <!-- WhatsApp & action buttons -->
+            <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-end border-t pt-5">
+              <button id="sendWhatsappBtn" class="whatsapp-btn text-white font-bold py-3 px-6 rounded-xl shadow-md flex items-center justify-center gap-3 text-base"><i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp</button>
+              <button id="refreshBillBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-5 rounded-xl flex items-center gap-2"><i class="fas fa-sync-alt"></i> Refresh Preview</button>
+            </div>
+            <p class="text-xs text-gray-400 text-right mt-3"><i class="fas fa-shield-alt"></i> WhatsApp message includes item details & discount</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- DATA STATE ----------
+    let items = [];           // each item = { id, name, price, quantity }
+    let nextId = 1;
+    let discountPercent = 0;
+    
+    // DOM elements
+    const itemsTableBody = document.getElementById('itemsTableBody');
+    const subtotalSpan = document.getElementById('subtotalValue');
+    const discountAmountSpan = document.getElementById('discountAmount');
+    const grandTotalSpan = document.getElementById('grandTotalValue');
+    const discPercentLabel = document.getElementById('discPercentLabel');
+    const discountPercentInput = document.getElementById('discountPercent');
+    const customerNameInput = document.getElementById('customerName');
+    const customerPhoneInput = document.getElementById('customerPhone');
+    const displayCustomerNameSpan = document.getElementById('displayCustomerName');
+    const displayCustomerPhoneSpan = document.getElementById('displayCustomerPhone');
+    const billNumberSpan = document.getElementById('billNumber');
+    const billDateSpan = document.getElementById('billDate');
+    
+    // Buttons
+    const addItemBtn = document.getElementById('addItemBtn');
+    const clearAllBtn = document.getElementById('clearAllItemsBtn');
+    const sendWhatsappBtn = document.getElementById('sendWhatsappBtn');
+    const refreshBillBtn = document.getElementById('refreshBillBtn');
+    
+    // Quick add buttons
+    const quickBtns = document.querySelectorAll('.quick-add');
+    
+    // Helper: generate random bill number (just for uniqueness)
+    function setBillMetadata() {
+      const randomNum = Math.floor(Math.random() * 9000 + 1000);
+      billNumberSpan.innerText = randomNum;
+      const today = new Date();
+      const formatted = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + today.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
+      billDateSpan.innerText = formatted;
+    }
+    
+    // Update customer info display in bill
+    function updateCustomerDisplay() {
+      let custName = customerNameInput.value.trim();
+      let custPhone = customerPhoneInput.value.trim();
+      displayCustomerNameSpan.innerText = custName === "" ? "Guest Customer" : custName;
+      displayCustomerPhoneSpan.innerText = custPhone === "" ? "Not Provided" : custPhone;
+    }
+    
+    // Recalculate totals based on items array and discount percent
+    function calculateTotals() {
+      let subtotal = 0;
+      for (let item of items) {
+        subtotal += item.price * item.quantity;
+      }
+      const discPercentVal = parseFloat(discountPercent) || 0;
+      const discountAmount = (subtotal * discPercentVal) / 100;
+      const grandTotal = subtotal - discountAmount;
+      return { subtotal, discountAmount, grandTotal };
+    }
+    
+    // Update UI totals & discount display
+    function updateTotalsUI() {
+      const { subtotal, discountAmount, grandTotal } = calculateTotals();
+      subtotalSpan.innerText = `₹${subtotal.toFixed(2)}`;
+      discountAmountSpan.innerText = discountAmount.toFixed(2);
+      grandTotalSpan.innerText = `₹${grandTotal.toFixed(2)}`;
+      discPercentLabel.innerText = discountPercent;
+    }
+    
+    // Render items table with dynamic quantity and remove buttons
+    function renderItemsTable() {
+      if (!itemsTableBody) return;
+      if (items.length === 0) {
+        itemsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400"><i class="fas fa-box-open"></i> No items added. Add shirts, pants or custom items</td></tr>`;
+        updateTotalsUI();
+        return;
+      }
+      
+      let html = '';
+      for (let item of items) {
+        const lineTotal = (item.price * item.quantity).toFixed(2);
+        html += `
+          <tr class="hover:bg-gray-50 transition" data-item-id="${item.id}">
+            <td class="px-3 py-3 font-medium text-gray-800">${escapeHtml(item.name)}</td>
+            <td class="px-3 py-3 text-right">₹${item.price.toFixed(2)}</td>
+            <td class="px-3 py-3 text-center">
+              <input type="number" min="1" step="1" value="${item.quantity}" class="item-qty-input w-16 text-center border border-gray-300 rounded-md py-1 px-1 focus:ring-1 focus:ring-amber-400" data-id="${item.id}">
+            </td>
+            <td class="px-3 py-3 text-right font-mono">₹${lineTotal}</td>
+            <td class="px-3 py-3 text-center">
+              <button class="remove-item-btn text-red-500 hover:text-red-700 transition text-lg" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
+            </td>
+          </tr>
+        `;
+      }
+      itemsTableBody.innerHTML = html;
+      
+      // attach quantity change event listeners
+      document.querySelectorAll('.item-qty-input').forEach(input => {
+        input.addEventListener('change', function(e) {
+          const id = parseInt(this.getAttribute('data-id'));
+          let newQty = parseInt(this.value);
+          if (isNaN(newQty) || newQty < 1) newQty = 1;
+          const existingItem = items.find(i => i.id === id);
+          if (existingItem) {
+            existingItem.quantity = newQty;
+            // re-render table & update totals
+            renderItemsTable();
+            updateTotalsUI();
+            updateCustomerDisplay();   // refresh display (no change but consistent)
+          }
+        });
+      });
+      
+      // attach remove button listeners
+      document.querySelectorAll('.remove-item-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          const id = parseInt(this.getAttribute('data-id'));
+          items = items.filter(i => i.id !== id);
+          renderItemsTable();
+          updateTotalsUI();
+          updateCustomerDisplay();
+        });
+      });
+      
+      updateTotalsUI();
+    }
+    
+    // Helper: escape html to avoid injection
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+        return c;
+      });
+    }
+    
+    // Add new item to items array
+    function addItem(name, price, quantity) {
+      if (!name || name.trim() === "") {
+        alert("Please enter item name");
+        return false;
+      }
+      let priceNum = parseFloat(price);
+      let qtyNum = parseInt(quantity);
+      if (isNaN(priceNum) || priceNum <= 0) {
+        alert("Enter a valid price (>0)");
+        return false;
+      }
+      if (isNaN(qtyNum) || qtyNum < 1) {
+        alert("Quantity must be at least 1");
+        return false;
+      }
+      const newItem = {
+        id: nextId++,
+        name: name.trim(),
+        price: priceNum,
+        quantity: qtyNum,
+      };
+      items.push(newItem);
+      renderItemsTable();
+      updateTotalsUI();
+      updateCustomerDisplay();
+      return true;
+    }
+    
+    // clear all items
+    function clearAllItems() {
+      if (items.length > 0 && confirm("⚠️ Remove all items from bill?")) {
+        items = [];
+        renderItemsTable();
+        updateTotalsUI();
+        updateCustomerDisplay();
+      } else if (items.length === 0) {
+        alert("No items to clear.");
+      }
+    }
+    
+    // Generate WhatsApp message text (full bill content)
+    function generateWhatsAppMessage() {
+      const shopName = "ELEVATE MENS WEAR";
+      const custNameRaw = customerNameInput.value.trim() || "Guest";
+      const custPhoneRaw = customerPhoneInput.value.trim() || "Not provided";
+      const dateTime = new Date().toLocaleString('en-IN');
+      let itemsText = "";
+      if (items.length === 0) {
+        itemsText = "No items in bill.";
+      } else {
+        items.forEach(item => {
+          const lineTotal = (item.price * item.quantity).toFixed(2);
+          itemsText += `▸ ${item.name}  |  ₹${item.price.toFixed(2)} x ${item.quantity}  =  ₹${lineTotal}\n`;
+        });
+      }
+      const { subtotal, discountAmount, grandTotal } = calculateTotals();
+      const discountPercentVal = discountPercent;
+      let discountLine = discountPercentVal > 0 ? `Discount (${discountPercentVal}%) : - ₹${discountAmount.toFixed(2)}\n` : `Discount : ₹0\n`;
+      
+      const message = `🏬 *${shopName}* 🧥\n📅 ${dateTime} | Bill #${billNumberSpan.innerText}\n\n👤 *Customer:* ${custNameRaw}\n📞 *Mobile:* ${custPhoneRaw}\n\n━━━━━━━━━━━━━━━━━━\n*ITEMS:*\n${itemsText}\n━━━━━━━━━━━━━━━━━━\n💰 *Subtotal:* ₹${subtotal.toFixed(2)}\n${discountLine}✅ *GRAND TOTAL:* ₹${grandTotal.toFixed(2)}\n\n✨ *Thank you for shopping at Elevate!* ✨\nStyle that speaks confidence. Visit again!`;
+      
+      return message;
+    }
+    
+    // Send via WhatsApp using customer's phone number (if exists)
+    function sendWhatsAppBill() {
+      let phone = customerPhoneInput.value.trim();
+      if (!phone) {
+        alert("❌ Please enter customer's WhatsApp number to send bill directly.\n\n(Include country code, e.g., +919876543210)");
+        return;
+      }
+      // Remove any spaces, dashes, but keep + 
+      let cleanPhone = phone.replace(/\s+/g, '').replace(/-/g, '');
+      if (!cleanPhone.match(/^[\+]?[0-9]{7,15}$/)) {
+        alert("⚠️ Please enter a valid mobile number with country code (e.g., +919876543210).\nThe bill will still show the number but sending may fail.");
+        // Still allow? but better safe
+      }
+      if (items.length === 0) {
+        alert("Cannot send empty bill. Please add at least one item.");
+        return;
+      }
+      const messageText = generateWhatsAppMessage();
+      const encodedMsg = encodeURIComponent(messageText);
+      // Use wa.me with the phone number (remove '+' for wa.me? Actually wa.me accepts + prefix, but better to format with plus)
+      let waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
+      window.open(waUrl, '_blank');
+    }
+    
+    // Refresh UI: re-render items, totals, customer display
+    function fullRefresh() {
+      renderItemsTable();
+      updateTotalsUI();
+      updateCustomerDisplay();
+      setBillMetadata();
+    }
+    
+    // Event listeners for discount percent
+    function initDiscountListener() {
+      discountPercentInput.addEventListener('input', function(e) {
+        let val = parseFloat(e.target.value);
+        if (isNaN(val)) val = 0;
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        discountPercent = val;
+        discountPercentInput.value = val;
+        updateTotalsUI();   // recalc based on new discount
+        // also update the discount label & UI totals only, no need full re-render items
+        const { discountAmount } = calculateTotals();
+        discountAmountSpan.innerText = discountAmount.toFixed(2);
+        const { grandTotal } = calculateTotals();
+        grandTotalSpan.innerText = `₹${grandTotal.toFixed(2)}`;
+        discPercentLabel.innerText = discountPercent;
+      });
+    }
+    
+    // Add custom item from form
+    function handleAddCustomItem() {
+      const name = document.getElementById('itemName').value;
+      const price = document.getElementById('itemPrice').value;
+      const qty = document.getElementById('itemQty').value;
+      if (addItem(name, price, qty)) {
+        // clear fields after adding (optional)
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemPrice').value = '';
+        document.getElementById('itemQty').value = '1';
+      }
+    }
+    
+    // quick add preset
+    function setupQuickAdd() {
+      quickBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const itemName = btn.getAttribute('data-quick');
+          const itemPrice = btn.getAttribute('data-price');
+          if (itemName && itemPrice) {
+            addItem(itemName, parseFloat(itemPrice), 1);
+          }
+        });
+      });
+    }
+    
+    // Also listen to customer inputs to update display live
+    function bindCustomerLiveUpdate() {
+      customerNameInput.addEventListener('input', updateCustomerDisplay);
+      customerPhoneInput.addEventListener('input', updateCustomerDisplay);
+    }
+    
+    // Initial load: add demo products (shirt, pant) to show richness & meet "many more items can be added by user"
+    function loadDemoItems() {
+      // adding sample menswear items so that user can see bill working, but fully editable
+      items.push({ id: nextId++, name: "Classic Oxford Shirt", price: 1199, quantity: 1 });
+      items.push({ id: nextId++, name: "Slim Fit Chino Pants", price: 1899, quantity: 1 });
+      items.push({ id: nextId++, name: "Premium Cotton T-Shirt", price: 799, quantity: 2 });
+      // user can delete or add further
+      renderItemsTable();
+      updateTotalsUI();
+    }
+    
+    // extra: clear all button handler + refresh button
+    function bindActions() {
+      clearAllBtn.addEventListener('click', clearAllItems);
+      refreshBillBtn.addEventListener('click', () => {
+        fullRefresh();
+        updateCustomerDisplay();
+      });
+      addItemBtn.addEventListener('click', handleAddCustomItem);
+      sendWhatsappBtn.addEventListener('click', sendWhatsAppBill);
+    }
+    
+    // Initialize app
+    function init() {
+      setBillMetadata();
+      discountPercent = 0;
+      discountPercentInput.value = 0;
+      loadDemoItems();       // start with some stylish menswear items
+      initDiscountListener();
+      setupQuickAdd();
+      bindActions();
+      bindCustomerLiveUpdate();
+      updateCustomerDisplay();
+      fullRefresh();
+    }
+    
+    init();
+  </script>
+</body>
+</html>
