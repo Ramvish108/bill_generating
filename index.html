@@ -10,7 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         body { background: #f4f2ef; }
-        .bill-card { transition: all 0.2s ease; }
         .whatsapp-btn { background: #25D366; transition: all 0.2s; }
         .whatsapp-btn:hover { background: #128C7E; transform: scale(1.02); }
         .pdf-btn { background: #d32f2f; transition: all 0.2s; }
@@ -35,7 +34,6 @@
             body * { visibility: hidden; }
             #billForPDF, #billForPDF * { visibility: visible; }
             #billForPDF { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; background: white; }
-            .no-print { display: none; }
         }
     </style>
 </head>
@@ -55,7 +53,7 @@
     </div>
 
     <div class="grid lg:grid-cols-5 gap-6">
-        <!-- LEFT PANEL: Customer + Add Items + Discount -->
+        <!-- LEFT PANEL: Customer + Add Items + Discount (final price override) -->
         <div class="lg:col-span-2 space-y-5">
             <!-- Customer Details -->
             <div class="bg-white rounded-xl shadow p-5">
@@ -73,7 +71,7 @@
                 </div>
             </div>
 
-            <!-- Add New Item (User Only) -->
+            <!-- Add New Item -->
             <div class="bg-white rounded-xl shadow p-5">
                 <h2 class="text-xl font-semibold border-b pb-2 flex items-center gap-2 text-gray-700"><i class="fas fa-plus-circle text-amber-700"></i> Add New Item</h2>
                 <div class="mt-3 grid grid-cols-2 gap-3">
@@ -92,7 +90,7 @@
                 </div>
                 <button id="addItemBtn" class="mt-4 w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"><i class="fas fa-cart-plus"></i> Add to Bill</button>
                 
-                <!-- Quick Presets (optional) -->
+                <!-- Quick Presets -->
                 <div class="mt-5 pt-2 border-t border-dashed">
                     <p class="text-xs font-medium text-gray-500 mb-2">⚡ QUICK ADD (preset items)</p>
                     <div class="flex flex-wrap gap-2">
@@ -105,16 +103,14 @@
                 </div>
             </div>
 
-            <!-- Discount Control -->
+            <!-- Discount via final price override -->
             <div class="bg-white rounded-xl shadow p-5">
-                <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-700"><i class="fas fa-tags text-amber-700"></i> Discount</h2>
-                <div class="mt-2 flex items-center gap-3 flex-wrap">
-                    <div class="flex-1">
-                        <label class="text-sm text-gray-500">Discount (%)</label>
-                        <input type="number" id="discountPercent" value="0" min="0" max="100" step="1" class="w-full border rounded-lg px-3 py-2">
-                    </div>
-                    <div class="flex-1 text-right">
-                        <p class="text-xs text-gray-400">Applied on subtotal</p>
+                <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-700"><i class="fas fa-tags text-amber-700"></i> Final Price Override</h2>
+                <div class="mt-2 space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">Sell at (₹)</label>
+                        <input type="number" id="sellAtPrice" placeholder="Enter final bill amount" class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400" step="0.01" min="0">
+                        <p class="text-xs text-gray-400 mt-1">Leave empty to charge subtotal. Discount = Subtotal - Sell Price</p>
                     </div>
                 </div>
                 <button id="clearAllItemsBtn" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition text-sm font-medium"><i class="fas fa-trash-alt"></i> Clear All Items</button>
@@ -148,29 +144,29 @@
                     <div><span class="font-semibold">Order Type:</span> Walk-in</div>
                 </div>
 
-                <!-- Items Table (Tally style) -->
+                <!-- Items Table -->
                 <div class="p-5">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr>
+                            <tr class="bg-gray-100">
                                 <th class="text-left">Sl.No</th>
                                 <th class="text-left">Particulars</th>
                                 <th class="text-right">Qty</th>
                                 <th class="text-right">Rate (₹)</th>
                                 <th class="text-right">Amount (₹)</th>
+                                <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="itemsTableBody">
-                            <!-- Dynamic rows will be inserted here -->
-                            <tr><td colspan="5" class="text-center py-4 text-gray-400">No items added. Add items from left panel.</td></tr>
+                            <tr><td colspan="6" class="text-center py-4 text-gray-400">No items added. Add items from left panel.</td></tr>
                         </tbody>
                     </table>
 
-                    <!-- Totals Section -->
+                    <!-- Totals Section with Discount based on final price -->
                     <div class="mt-4 flex justify-end">
-                        <div class="w-72 space-y-1 text-sm">
+                        <div class="w-80 space-y-1 text-sm">
                             <div class="flex justify-between"><span>Subtotal :</span> <span id="subtotalValue">₹0.00</span></div>
-                            <div class="flex justify-between"><span>Discount (<span id="discPercentLabel">0</span>%) :</span> <span class="text-red-600">- ₹<span id="discountAmount">0.00</span></span></div>
+                            <div class="flex justify-between text-green-600"><span>Discount (Override) :</span> <span>- ₹<span id="discountAmount">0.00</span></span></div>
                             <div class="flex justify-between font-bold text-base border-t pt-1 mt-1"><span>GRAND TOTAL :</span> <span id="grandTotalValue">₹0.00</span></div>
                             <div class="flex justify-between text-xs text-gray-500 mt-2"><span>Amount in words :</span> <span id="amountInWords"></span></div>
                         </div>
@@ -192,7 +188,7 @@
                 <button id="downloadPdfBtn" class="pdf-btn text-white font-bold py-3 px-6 rounded-xl shadow-md flex items-center justify-center gap-3 text-base"><i class="fas fa-file-pdf text-xl"></i> Download PDF Bill</button>
                 <button id="refreshBillBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-5 rounded-xl flex items-center gap-2"><i class="fas fa-sync-alt"></i> Refresh Preview</button>
             </div>
-            <p class="text-xs text-gray-400 text-right mt-3"><i class="fas fa-shield-alt"></i> PDF download increments invoice number. WhatsApp shares text summary.</p>
+            <p class="text-xs text-gray-400 text-right mt-3"><i class="fas fa-shield-alt"></i> PDF download increments invoice number.</p>
         </div>
     </div>
 </div>
@@ -201,7 +197,6 @@
     // ---------- STATE ----------
     let items = [];
     let nextId = 1;
-    let discountPercent = 0;
     
     // Invoice counter (starts from 1, increments on each PDF download)
     let currentInvoiceNumber = (() => {
@@ -213,13 +208,12 @@
         return parseInt(stored);
     })();
 
-    // DOM elements (updated for Tally style)
+    // DOM elements
     const itemsTableBody = document.getElementById('itemsTableBody');
     const subtotalSpan = document.getElementById('subtotalValue');
     const discountAmountSpan = document.getElementById('discountAmount');
     const grandTotalSpan = document.getElementById('grandTotalValue');
-    const discPercentLabel = document.getElementById('discPercentLabel');
-    const discountPercentInput = document.getElementById('discountPercent');
+    const sellAtPriceInput = document.getElementById('sellAtPrice');
     const customerNameInput = document.getElementById('customerName');
     const customerPhoneInput = document.getElementById('customerPhone');
     const displayCustomerNameSpan = document.getElementById('displayCustomerName');
@@ -234,7 +228,37 @@
     const refreshBillBtn = document.getElementById('refreshBillBtn');
     const quickBtns = document.querySelectorAll('.quick-add');
     
-    // Helper: Number to words (Indian Rupees)
+    // Calculate subtotal from items
+    function calculateSubtotal() {
+        let subtotal = 0;
+        for (let item of items) subtotal += item.price * item.quantity;
+        return subtotal;
+    }
+    
+    // Get discount and grand total based on sellAtPrice override
+    function getDiscountAndGrandTotal(subtotal) {
+        let sellAt = parseFloat(sellAtPriceInput.value);
+        if (isNaN(sellAt) || sellAt <= 0 || sellAt >= subtotal) {
+            // No valid override: no discount, grand total = subtotal
+            return { discountAmount: 0, grandTotal: subtotal };
+        } else {
+            // Valid override: discount = subtotal - sellAt
+            let discountAmount = subtotal - sellAt;
+            if (discountAmount < 0) discountAmount = 0;
+            return { discountAmount, grandTotal: sellAt };
+        }
+    }
+    
+    function updateTotalsUI() {
+        const subtotal = calculateSubtotal();
+        const { discountAmount, grandTotal } = getDiscountAndGrandTotal(subtotal);
+        subtotalSpan.innerText = `₹${subtotal.toFixed(2)}`;
+        discountAmountSpan.innerText = discountAmount.toFixed(2);
+        grandTotalSpan.innerText = `₹${grandTotal.toFixed(2)}`;
+        amountInWordsSpan.innerText = numberToWords(grandTotal);
+    }
+    
+    // Number to words function (unchanged)
     function numberToWords(num) {
         if (num === 0) return "Zero Rupees Only";
         const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
@@ -265,15 +289,15 @@
         let paise = Math.round((num - rupees) * 100);
         let words = '';
         
-        if (rupees >= 10000000) { // Crore
+        if (rupees >= 10000000) {
             words += convertLessThanThousand(Math.floor(rupees / 10000000)) + 'Crore ';
             rupees %= 10000000;
         }
-        if (rupees >= 100000) { // Lakh
+        if (rupees >= 100000) {
             words += convertLessThanThousand(Math.floor(rupees / 100000)) + 'Lakh ';
             rupees %= 100000;
         }
-        if (rupees >= 1000) { // Thousand
+        if (rupees >= 1000) {
             words += convertLessThanThousand(Math.floor(rupees / 1000)) + 'Thousand ';
             rupees %= 1000;
         }
@@ -307,24 +331,6 @@
         displayCustomerPhoneSpan.innerText = custPhone === "" ? "Not Provided" : custPhone;
     }
     
-    function calculateTotals() {
-        let subtotal = 0;
-        for (let item of items) subtotal += item.price * item.quantity;
-        const discPercentVal = parseFloat(discountPercent) || 0;
-        const discountAmount = (subtotal * discPercentVal) / 100;
-        const grandTotal = subtotal - discountAmount;
-        return { subtotal, discountAmount, grandTotal };
-    }
-    
-    function updateTotalsUI() {
-        const { subtotal, discountAmount, grandTotal } = calculateTotals();
-        subtotalSpan.innerText = `₹${subtotal.toFixed(2)}`;
-        discountAmountSpan.innerText = discountAmount.toFixed(2);
-        grandTotalSpan.innerText = `₹${grandTotal.toFixed(2)}`;
-        discPercentLabel.innerText = discountPercent;
-        amountInWordsSpan.innerText = numberToWords(grandTotal);
-    }
-    
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -335,88 +341,6 @@
         });
     }
     
-    function renderItemsTable() {
-        if (!itemsTableBody) return;
-        if (items.length === 0) {
-            itemsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">No items added. Add items from left panel.</td></tr>';
-            updateTotalsUI();
-            return;
-        }
-        
-        let html = '';
-        items.forEach((item, index) => {
-            const lineTotal = (item.price * item.quantity).toFixed(2);
-            html += `
-                <tr data-item-id="${item.id}">
-                    <td class="text-left">${index + 1}</td>
-                    <td class="text-left">${escapeHtml(item.name)}</td>
-                    <td class="text-right">
-                        <input type="number" min="1" step="1" value="${item.quantity}" class="item-qty-input w-16 text-center border border-gray-300 rounded-md py-1 px-1 focus:ring-1 focus:ring-amber-400" data-id="${item.id}">
-                    </td>
-                    <td class="text-right">₹${item.price.toFixed(2)}</td>
-                    <td class="text-right">₹${lineTotal}</td>
-                </tr>
-            `;
-        });
-        itemsTableBody.innerHTML = html;
-        
-        // Attach quantity change events
-        document.querySelectorAll('.item-qty-input').forEach(input => {
-            input.addEventListener('change', function(e) {
-                const id = parseInt(this.getAttribute('data-id'));
-                let newQty = parseInt(this.value);
-                if (isNaN(newQty) || newQty < 1) newQty = 1;
-                const existingItem = items.find(i => i.id === id);
-                if (existingItem) {
-                    existingItem.quantity = newQty;
-                    renderItemsTable();
-                    updateTotalsUI();
-                    updateCustomerDisplay();
-                }
-            });
-        });
-        
-        // Remove button is now part of action column? Not needed in Tally style, but we keep as input only; no remove button in table, but we have "Clear All" button.
-        // However, we need remove item functionality. Add a delete icon? Let's add a remove button in the last column.
-        // To maintain consistency, add a remove button in a new column? But that would break Tally look. Better add a small delete icon in the first column? Let's add a delete icon beside Sl.No.
-        // Actually user requested no default items and user adds, but they need to remove items. Let's add a remove button in the last column.
-        // We'll add a "Action" column with a delete icon.
-        // Update table header and rows accordingly.
-        // Let's modify the table structure to include an Action column.
-        // Since this is a complete code, we'll adjust.
-        // But to avoid confusion, we'll re-render with an extra column for delete.
-        // However, the Tally style might not have action column. But for usability, we add it.
-        // We'll update the table thead and rows.
-    }
-    
-    // We need to include action column in table. Let's modify the HTML table structure inside #billForPDF.
-    // But we are generating HTML now, so we need to ensure the table thead includes "Action".
-    // Since we are rendering the entire table from JavaScript, we can set the thead dynamically too.
-    // Let's redesign: We'll set the table thead with 6 columns including Action.
-    // Update the HTML inside #billForPDF to have thead with appropriate columns.
-    // We'll also add a remove button in each row.
-    
-    // We'll rewrite renderItemsTable to include an "Action" column with delete button.
-    // And adjust the table header in the HTML accordingly.
-    
-    // Let's modify the HTML: inside #billForPDF, find the table and add a th for Action.
-    // For simplicity, we will replace the entire #billForPDF content with dynamic generation? Better to just update the static HTML to include action column.
-    // I'll update the HTML structure now.
-    
-    // Since we are providing full code, I'll modify the static HTML table to have an extra column "Action".
-    // Then adjust renderItemsTable to populate that column with delete button.
-    
-    // But we already have the static HTML above. I'll change it in the final answer.
-    // For now, I'll include the action column in the table and adjust the render function.
-    
-    // Let's also add the remove-item-btn event binding.
-    
-    // We'll now write the final renderItemsTable with remove functionality.
-    // We'll keep the same event binding logic.
-    
-    // Proceed.
-    
-    // ----- Updated renderItemsTable (with remove button) -----
     function renderItemsTable() {
         if (!itemsTableBody) return;
         if (items.length === 0) {
@@ -497,22 +421,12 @@
         } else if (items.length === 0) alert("No items to clear.");
     }
     
-    // WhatsApp message generation (unchanged)
+    // Simple WhatsApp message with final total
     function generateWhatsAppMessage() {
-        const shopName = "ELEVATE MENS WEAR";
-        const custNameRaw = customerNameInput.value.trim() || "Guest";
-        const custPhoneRaw = customerPhoneInput.value.trim() || "Not provided";
-        const dateTime = new Date().toLocaleString('en-IN');
-        let itemsText = "";
-        if (items.length === 0) return "No items in bill.";
-        items.forEach(item => {
-            const lineTotal = (item.price * item.quantity).toFixed(2);
-            itemsText += `▸ ${item.name}  |  ₹${item.price.toFixed(2)} x ${item.quantity}  =  ₹${lineTotal}\n`;
-        });
-        const { subtotal, discountAmount, grandTotal } = calculateTotals();
-        const discountPercentVal = discountPercent;
-        let discountLine = discountPercentVal > 0 ? `Discount (${discountPercentVal}%) : - ₹${discountAmount.toFixed(2)}\n` : `Discount : ₹0\n`;
-        return `🏬 *${shopName}* 🧥\n📅 ${dateTime} | Invoice #INV-${String(currentInvoiceNumber).padStart(4, '0')}\n\n👤 *Customer:* ${custNameRaw}\n📞 *Mobile:* ${custPhoneRaw}\n\n━━━━━━━━━━━━━━━━━━\n*ITEMS:*\n${itemsText}\n━━━━━━━━━━━━━━━━━━\n💰 *Subtotal:* ₹${subtotal.toFixed(2)}\n${discountLine}✅ *GRAND TOTAL:* ₹${grandTotal.toFixed(2)}\n\n📋 *Exchange Policy:*\nCloth must be exchanged within 2 days of purchase with original bill. No refunds.\n\n✨ *Thank you for shopping at Elevate!* ✨\nStyle that speaks confidence. Visit again!`;
+        const custNameRaw = customerNameInput.value.trim() || "Valued Customer";
+        const invoiceNo = `INV-${String(currentInvoiceNumber).padStart(4, '0')}`;
+        const { grandTotal } = getDiscountAndGrandTotal(calculateSubtotal());
+        return `🎉 *Thank you for shopping at Elevate Mens Wear!* 🎉\n\nDear ${custNameRaw},\n\nYour invoice: ${invoiceNo}\nTotal Amount: ₹${grandTotal.toFixed(2)}\n\nWe appreciate your visit! 😊\n\n*Exchange Policy:* Cloth must be exchanged within 2 days with original bill. No refunds.\n\n✨ Visit again! ✨`;
     }
     
     function sendWhatsAppBill() {
@@ -550,19 +464,24 @@
             alert("Cannot generate PDF for empty bill. Please add items.");
             return;
         }
+        // Increment invoice counter
         currentInvoiceNumber++;
         localStorage.setItem('elevate_invoice_counter', currentInvoiceNumber);
         updateInvoiceDisplay();
+        
         const element = document.getElementById('billForPDF');
-        const opt = {
-            margin:        [0.5, 0.5, 0.5, 0.5],
-            filename:     `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, letterRendering: true },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
-        alert(`PDF bill generated! Invoice #INV-${String(currentInvoiceNumber).padStart(4, '0')} saved.`);
+        // Force a short delay to ensure all content is fully rendered (especially input values)
+        setTimeout(() => {
+            const opt = {
+                margin:        [0.5, 0.5, 0.5, 0.5],
+                filename:     `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, letterRendering: true },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+            alert(`PDF bill generated! Invoice #INV-${String(currentInvoiceNumber).padStart(4, '0')} saved.`);
+        }, 200);
     }
     
     function fullRefresh() {
@@ -570,18 +489,6 @@
         updateTotalsUI();
         updateCustomerDisplay();
         setBillMetadata();
-    }
-    
-    function initDiscountListener() {
-        discountPercentInput.addEventListener('input', function(e) {
-            let val = parseFloat(e.target.value);
-            if (isNaN(val)) val = 0;
-            if (val < 0) val = 0;
-            if (val > 100) val = 100;
-            discountPercent = val;
-            discountPercentInput.value = val;
-            updateTotalsUI();
-        });
     }
     
     function handleAddCustomItem() {
@@ -618,18 +525,16 @@
         addItemBtn.addEventListener('click', handleAddCustomItem);
         sendWhatsappBtn.addEventListener('click', sendWhatsAppBill);
         downloadPdfBtn.addEventListener('click', generateAndDownloadPDF);
+        sellAtPriceInput.addEventListener('input', () => updateTotalsUI());
     }
     
     function init() {
         setBillMetadata();
-        discountPercent = 0;
-        discountPercentInput.value = 0;
         items = [];
         nextId = 1;
         renderItemsTable();
         updateTotalsUI();
         updateCustomerDisplay();
-        initDiscountListener();
         setupQuickAdd();
         bindActions();
         bindCustomerLiveUpdate();
