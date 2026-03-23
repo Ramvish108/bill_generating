@@ -3,49 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Elevate Mens Wear | Tally Style Billing</title>
-    <!-- Tailwind + Font Awesome + html2pdf -->
+    <title>Elevate Mens Wear | Billing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- jsPDF loaded below in body -->
     <style>
         body { background: #f4f2ef; }
         .whatsapp-btn { background: #25D366; transition: all 0.2s; }
         .whatsapp-btn:hover { background: #128C7E; transform: scale(1.02); }
         .pdf-btn { background: #d32f2f; transition: all 0.2s; }
         .pdf-btn:hover { background: #b71c1c; transform: scale(1.02); }
-        
-        /* Tally style table borders for PDF area */
-        #billForPDF table,
-        #billForPDF th,
-        #billForPDF td {
-            border: 1px solid #ccc;
-            border-collapse: collapse;
-        }
-        #billForPDF th, #billForPDF td {
-            padding: 8px 12px;
-        }
-        #billForPDF th {
-            background: #f3f4f6;
-            font-weight: 600;
-        }
-        
-        /* Hide inputs in PDF, show text spans */
-        @media print {
-            body * { visibility: hidden; }
-            #billForPDF, #billForPDF * { visibility: visible; }
-            #billForPDF { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; background: white; }
-            .item-qty-input { display: none !important; }
-            .qty-text-for-pdf { display: inline !important; }
-            .remove-item-btn { display: none !important; }
-        }
-        
-        /* For PDF generation: hide inputs, show text */
-        .pdf-mode .item-qty-input { display: none !important; }
-        .pdf-mode .qty-text-for-pdf { display: inline !important; }
-        .pdf-mode .remove-item-btn { display: none !important; }
-        
-        .qty-text-for-pdf { display: none; }
+
+        #billPreview table { border-collapse: collapse; width: 100%; }
+        #billPreview th, #billPreview td { border: 1px solid #d1d5db; padding: 8px 10px; }
+        #billPreview th { background: #f3f4f6; font-weight: 600; font-size: 13px; }
+        #billPreview td { font-size: 13px; }
+
+
     </style>
 </head>
 <body class="font-sans antialiased p-4 md:p-6">
@@ -54,7 +28,7 @@
     <!-- Header -->
     <div class="bg-white rounded-2xl shadow-md p-5 mb-6 flex flex-wrap justify-between items-center border-l-8 border-amber-700">
         <div>
-            <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-800">👔 ELEVATE <span class="text-amber-800">MENS WEAR</span></h1>
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-800">&#128084; ELEVATE <span class="text-amber-800">MENS WEAR</span></h1>
             <p class="text-gray-500 text-sm mt-1">Premium Mens Wear Collection</p>
         </div>
         <div class="text-right">
@@ -64,19 +38,23 @@
     </div>
 
     <div class="grid lg:grid-cols-5 gap-6">
-        <!-- LEFT PANEL: Customer + Add Items + Discount (final price override) -->
+        <!-- LEFT PANEL -->
         <div class="lg:col-span-2 space-y-5">
             <!-- Customer Details -->
             <div class="bg-white rounded-xl shadow p-5">
-                <h2 class="text-xl font-semibold border-b pb-2 flex items-center gap-2 text-gray-700"><i class="fas fa-user-circle text-amber-700"></i> Customer Details</h2>
+                <h2 class="text-xl font-semibold border-b pb-2 flex items-center gap-2 text-gray-700">
+                    <i class="fas fa-user-circle text-amber-700"></i> Customer Details
+                </h2>
                 <div class="mt-4 space-y-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-600">Full Name *</label>
-                        <input type="text" id="customerName" placeholder="e.g., Rajesh Khanna" class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400">
+                        <input type="text" id="customerName" placeholder="e.g., Rajesh Khanna"
+                               class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-600">WhatsApp / Mobile No. *</label>
-                        <input type="tel" id="customerPhone" placeholder="9876543210" class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400">
+                        <input type="tel" id="customerPhone" placeholder="9876543210"
+                               class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400">
                         <p class="text-xs text-gray-400 mt-1">Enter 10-digit mobile number (auto +91) or full international number</p>
                     </div>
                 </div>
@@ -84,54 +62,68 @@
 
             <!-- Add New Item -->
             <div class="bg-white rounded-xl shadow p-5">
-                <h2 class="text-xl font-semibold border-b pb-2 flex items-center gap-2 text-gray-700"><i class="fas fa-plus-circle text-amber-700"></i> Add New Item</h2>
+                <h2 class="text-xl font-semibold border-b pb-2 flex items-center gap-2 text-gray-700">
+                    <i class="fas fa-plus-circle text-amber-700"></i> Add New Item
+                </h2>
                 <div class="mt-3 grid grid-cols-2 gap-3">
                     <div class="col-span-2">
                         <label class="text-sm text-gray-600">Item Name</label>
-                        <input type="text" id="itemName" placeholder="e.g., Premium Denim, Polo Shirt" class="w-full border rounded-lg px-3 py-2 mt-1">
+                        <input type="text" id="itemName" placeholder="e.g., Premium Denim, Polo Shirt"
+                               class="w-full border rounded-lg px-3 py-2 mt-1">
                     </div>
                     <div>
-                        <label class="text-sm text-gray-600">Price (₹)</label>
-                        <input type="number" id="itemPrice" placeholder="0.00" class="w-full border rounded-lg px-3 py-2 mt-1" step="0.01" min="0">
+                        <label class="text-sm text-gray-600">Price (&#8377;)</label>
+                        <input type="number" id="itemPrice" placeholder="0.00"
+                               class="w-full border rounded-lg px-3 py-2 mt-1" step="0.01" min="0">
                     </div>
                     <div>
                         <label class="text-sm text-gray-600">Qty</label>
-                        <input type="number" id="itemQty" placeholder="1" value="1" class="w-full border rounded-lg px-3 py-2 mt-1" min="1" step="1">
+                        <input type="number" id="itemQty" placeholder="1" value="1"
+                               class="w-full border rounded-lg px-3 py-2 mt-1" min="1" step="1">
                     </div>
                 </div>
-                <button id="addItemBtn" class="mt-4 w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"><i class="fas fa-cart-plus"></i> Add to Bill</button>
-                
+                <button id="addItemBtn"
+                        class="mt-4 w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fas fa-cart-plus"></i> Add to Bill
+                </button>
                 <!-- Quick Presets -->
                 <div class="mt-5 pt-2 border-t border-dashed">
-                    <p class="text-xs font-medium text-gray-500 mb-2">⚡ QUICK ADD (preset items)</p>
+                    <p class="text-xs font-medium text-gray-500 mb-2">&#9889; QUICK ADD (preset items)</p>
                     <div class="flex flex-wrap gap-2">
-                        <button data-quick="Shirt" data-price="899" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-tshirt"></i> Shirt ₹899</button>
-                        <button data-quick="Pants" data-price="1299" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-shopping-bag"></i> Pants ₹1299</button>
-                        <button data-quick="T-Shirt" data-price="599" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-tshirt"></i> T-Shirt ₹599</button>
-                        <button data-quick="Jacket" data-price="2499" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-user-tie"></i> Jacket ₹2499</button>
-                        <button data-quick="Shorts" data-price="649" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full"><i class="fas fa-swimming-pool"></i> Shorts ₹649</button>
+                        <button data-quick="Shirt" data-price="899" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full">Shirt &#8377;899</button>
+                        <button data-quick="Pants" data-price="1299" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full">Pants &#8377;1299</button>
+                        <button data-quick="T-Shirt" data-price="599" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full">T-Shirt &#8377;599</button>
+                        <button data-quick="Jacket" data-price="2499" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full">Jacket &#8377;2499</button>
+                        <button data-quick="Shorts" data-price="649" class="quick-add bg-gray-100 hover:bg-amber-100 text-gray-800 text-sm px-3 py-1 rounded-full">Shorts &#8377;649</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Discount via final price override -->
+            <!-- Discount -->
             <div class="bg-white rounded-xl shadow p-5">
-                <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-700"><i class="fas fa-tags text-amber-700"></i> Final Price Override</h2>
+                <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                    <i class="fas fa-tags text-amber-700"></i> Final Price Override
+                </h2>
                 <div class="mt-2 space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-600">Sell at (₹)</label>
-                        <input type="number" id="sellAtPrice" placeholder="Enter final bill amount" class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400" step="0.01" min="0">
+                        <label class="block text-sm font-medium text-gray-600">Sell at (&#8377;)</label>
+                        <input type="number" id="sellAtPrice" placeholder="Enter final bill amount"
+                               class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-400"
+                               step="0.01" min="0">
                         <p class="text-xs text-gray-400 mt-1">Leave empty to charge subtotal. Discount = Subtotal - Sell Price</p>
                     </div>
                 </div>
-                <button id="clearAllItemsBtn" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition text-sm font-medium"><i class="fas fa-trash-alt"></i> Clear All Items</button>
+                <button id="clearAllItemsBtn"
+                        class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition text-sm font-medium">
+                    <i class="fas fa-trash-alt"></i> Clear All Items
+                </button>
             </div>
         </div>
 
-        <!-- RIGHT PANEL: BILL PREVIEW (Tally style) -->
+        <!-- RIGHT PANEL: Bill Preview -->
         <div class="lg:col-span-3">
-            <div id="billForPDF" class="bg-white rounded-xl shadow-xl overflow-hidden">
-                <!-- Header: Shop details -->
+            <div id="billPreview" class="bg-white rounded-xl shadow-xl overflow-hidden">
+                <!-- Header -->
                 <div class="p-5 border-b-2 border-gray-300">
                     <div class="flex justify-between items-start">
                         <div>
@@ -142,51 +134,63 @@
                         </div>
                         <div class="text-right">
                             <p class="text-xl font-bold">TAX INVOICE</p>
-                            <p class="text-sm">Invoice No: <span id="invoiceNumberDisplay" class="font-mono">INV-001</span></p>
+                            <p class="text-sm">Invoice No: <span id="invoiceNumberDisplay" class="font-mono font-semibold">INV-0001</span></p>
                             <p class="text-sm">Date: <span id="billDate"></span></p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Customer Details -->
-                <div class="px-5 py-3 bg-gray-50 border-b flex flex-wrap justify-between text-sm">
-                    <div><span class="font-semibold">Customer Name:</span> <span id="displayCustomerName">—</span></div>
-                    <div><span class="font-semibold">Mobile No.:</span> <span id="displayCustomerPhone">—</span></div>
+                <!-- Customer row -->
+                <div class="px-5 py-3 bg-gray-50 border-b flex flex-wrap justify-between text-sm gap-2">
+                    <div><span class="font-semibold">Customer Name:</span> <span id="displayCustomerName">&#8212;</span></div>
+                    <div><span class="font-semibold">Mobile No.:</span> <span id="displayCustomerPhone">&#8212;</span></div>
                     <div><span class="font-semibold">Order Type:</span> Walk-in</div>
                 </div>
-
-                <!-- Items Table -->
+                <!-- Items table -->
                 <div class="p-5">
-                    <table class="w-full text-sm">
+                    <table>
                         <thead>
-                            <tr class="bg-gray-100">
+                            <tr>
                                 <th class="text-left">Sl.No</th>
                                 <th class="text-left">Particulars</th>
                                 <th class="text-right">Qty</th>
-                                <th class="text-right">Rate (₹)</th>
-                                <th class="text-right">Amount (₹)</th>
+                                <th class="text-right">Rate (&#8377;)</th>
+                                <th class="text-right">Amount (&#8377;)</th>
                                 <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="itemsTableBody">
-                            <tr><td colspan="6" class="text-center py-4 text-gray-400">No items added. Add items from left panel.</td></tr>
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-gray-400">
+                                    No items added. Add items from left panel.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
 
-                    <!-- Totals Section with Discount based on final price -->
+                    <!-- Totals -->
                     <div class="mt-4 flex justify-end">
                         <div class="w-80 space-y-1 text-sm">
-                            <div class="flex justify-between"><span>Subtotal :</span> <span id="subtotalValue">₹0.00</span></div>
-                            <div class="flex justify-between text-green-600"><span>Discount (Override) :</span> <span>- ₹<span id="discountAmount">0.00</span></span></div>
-                            <div class="flex justify-between font-bold text-base border-t pt-1 mt-1"><span>GRAND TOTAL :</span> <span id="grandTotalValue">₹0.00</span></div>
-                            <div class="flex justify-between text-xs text-gray-500 mt-2"><span>Amount in words :</span> <span id="amountInWords"></span></div>
+                            <div class="flex justify-between"><span>Subtotal :</span> <span id="subtotalValue">&#8377;0.00</span></div>
+                            <div class="flex justify-between text-green-600">
+                                <span>Discount (Override) :</span>
+                                <span>- &#8377;<span id="discountAmount">0.00</span></span>
+                            </div>
+                            <div class="flex justify-between font-bold text-base border-t pt-1 mt-1">
+                                <span>GRAND TOTAL :</span>
+                                <span id="grandTotalValue">&#8377;0.00</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-2">
+                                <span>Amount in words :</span>
+                                <span id="amountInWords" class="text-right ml-2"></span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Exchange / Refund Policy -->
+                    <!-- Policy -->
                     <div class="mt-6 pt-4 border-t border-dashed text-center text-xs text-gray-600">
-                        <p class="font-semibold">📋 Exchange Policy:</p>
-                        <p>Cloth must be exchanged within <span class="font-bold text-amber-700">2 days</span> of purchase with original bill. <span class="text-red-600">No refunds.</span></p>
+                        <p class="font-semibold">&#128203; Exchange Policy:</p>
+                        <p>Cloth must be exchanged within <span class="font-bold text-amber-700">2 days</span> of purchase with original bill.
+                           <span class="text-red-600">No refunds.</span></p>
                         <p class="mt-2">* This is a computer generated invoice - no signature required *</p>
                         <p>Thank you for shopping with Elevate Mens Wear!</p>
                     </div>
@@ -195,471 +199,454 @@
 
             <!-- Action Buttons -->
             <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
-                <button id="sendWhatsappBtn" class="whatsapp-btn text-white font-bold py-3 px-6 rounded-xl shadow-md flex items-center justify-center gap-3 text-base"><i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp</button>
-                <button id="downloadPdfBtn" class="pdf-btn text-white font-bold py-3 px-6 rounded-xl shadow-md flex items-center justify-center gap-3 text-base"><i class="fas fa-file-pdf text-xl"></i> Download PDF Bill</button>
-                <button id="refreshBillBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-5 rounded-xl flex items-center gap-2"><i class="fas fa-sync-alt"></i> Refresh Preview</button>
+                <button id="sendWhatsappBtn"
+                        class="whatsapp-btn text-white font-bold py-3 px-6 rounded-xl shadow-md flex items-center justify-center gap-3 text-base">
+                    <i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp
+                </button>
+                <button id="downloadPdfBtn"
+                        class="pdf-btn text-white font-bold py-3 px-6 rounded-xl shadow-md flex items-center justify-center gap-3 text-base">
+                    <i class="fas fa-file-pdf text-xl"></i> Download PDF Bill
+                </button>
+                <button id="refreshBillBtn"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-5 rounded-xl flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
             </div>
-            <p class="text-xs text-gray-400 text-right mt-3"><i class="fas fa-shield-alt"></i> PDF download increments invoice number.</p>
+            <p class="text-xs text-gray-400 text-right mt-3">
+                <i class="fas fa-shield-alt"></i> PDF download increments invoice number.
+            </p>
         </div>
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-    // ---------- STATE ----------
-    let items = [];
-    let nextId = 1;
-    
-    // Invoice counter (starts from 1, increments on each PDF download)
-    let currentInvoiceNumber = (() => {
-        let stored = localStorage.getItem('elevate_invoice_counter');
-        if (stored === null) {
-            localStorage.setItem('elevate_invoice_counter', '1');
-            return 1;
-        }
-        return parseInt(stored);
-    })();
+const { jsPDF } = window.jspdf;
 
-    // DOM elements
-    const itemsTableBody = document.getElementById('itemsTableBody');
-    const subtotalSpan = document.getElementById('subtotalValue');
-    const discountAmountSpan = document.getElementById('discountAmount');
-    const grandTotalSpan = document.getElementById('grandTotalValue');
-    const sellAtPriceInput = document.getElementById('sellAtPrice');
-    const customerNameInput = document.getElementById('customerName');
-    const customerPhoneInput = document.getElementById('customerPhone');
-    const displayCustomerNameSpan = document.getElementById('displayCustomerName');
-    const displayCustomerPhoneSpan = document.getElementById('displayCustomerPhone');
-    const invoiceNumberDisplay = document.getElementById('invoiceNumberDisplay');
-    const amountInWordsSpan = document.getElementById('amountInWords');
-    
-    const addItemBtn = document.getElementById('addItemBtn');
-    const clearAllBtn = document.getElementById('clearAllItemsBtn');
-    const sendWhatsappBtn = document.getElementById('sendWhatsappBtn');
-    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-    const refreshBillBtn = document.getElementById('refreshBillBtn');
-    const quickBtns = document.querySelectorAll('.quick-add');
-    
-    // Calculate subtotal from items
-    function calculateSubtotal() {
-        let subtotal = 0;
-        for (let item of items) subtotal += item.price * item.quantity;
-        return subtotal;
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let items  = [];
+let nextId = 1;
+
+let currentInvoiceNumber = (() => {
+    let s = localStorage.getItem('elevate_invoice_counter');
+    if (!s) { localStorage.setItem('elevate_invoice_counter','1'); return 1; }
+    return parseInt(s);
+})();
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const itemsTableBody       = document.getElementById('itemsTableBody');
+const subtotalSpan         = document.getElementById('subtotalValue');
+const discountAmountSpan   = document.getElementById('discountAmount');
+const grandTotalSpan       = document.getElementById('grandTotalValue');
+const sellAtPriceInput     = document.getElementById('sellAtPrice');
+const customerNameInput    = document.getElementById('customerName');
+const customerPhoneInput   = document.getElementById('customerPhone');
+const displayCustomerName  = document.getElementById('displayCustomerName');
+const displayCustomerPhone = document.getElementById('displayCustomerPhone');
+const invoiceNumberDisplay = document.getElementById('invoiceNumberDisplay');
+const amountInWordsSpan    = document.getElementById('amountInWords');
+const addItemBtn           = document.getElementById('addItemBtn');
+const clearAllBtn          = document.getElementById('clearAllItemsBtn');
+const sendWhatsappBtn      = document.getElementById('sendWhatsappBtn');
+const downloadPdfBtn       = document.getElementById('downloadPdfBtn');
+const refreshBillBtn       = document.getElementById('refreshBillBtn');
+const quickBtns            = document.querySelectorAll('.quick-add');
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function escapeHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function calculateSubtotal() {
+    return items.reduce((s,i) => s + i.price * i.quantity, 0);
+}
+function getDiscountAndGrandTotal(subtotal) {
+    let sellAt = parseFloat(sellAtPriceInput.value);
+    if (isNaN(sellAt) || sellAt <= 0 || sellAt >= subtotal)
+        return { discountAmount: 0, grandTotal: subtotal };
+    return { discountAmount: subtotal - sellAt, grandTotal: sellAt };
+}
+function numberToWords(num) {
+    if (num === 0) return 'Zero Rupees Only';
+    const ones  = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine'];
+    const tens  = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    const teens = ['Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    function lt1000(n) {
+        if (!n) return '';
+        let r = '';
+        if (n>=100){ r+=ones[Math.floor(n/100)]+' Hundred '; n%=100; if(n) r+='and '; }
+        if (n>=20) { r+=tens[Math.floor(n/10)]+' '; n%=10; if(n) r+=ones[n]+' '; }
+        else if(n>=10) r+=teens[n-10]+' ';
+        else if(n)     r+=ones[n]+' ';
+        return r;
     }
-    
-    // Get discount and grand total based on sellAtPrice override
-    function getDiscountAndGrandTotal(subtotal) {
-        let sellAt = parseFloat(sellAtPriceInput.value);
-        if (isNaN(sellAt) || sellAt <= 0 || sellAt >= subtotal) {
-            // No valid override: no discount, grand total = subtotal
-            return { discountAmount: 0, grandTotal: subtotal };
-        } else {
-            // Valid override: discount = subtotal - sellAt
-            let discountAmount = subtotal - sellAt;
-            if (discountAmount < 0) discountAmount = 0;
-            return { discountAmount, grandTotal: sellAt };
-        }
+    let rupees=Math.floor(num), paise=Math.round((num-rupees)*100), w='';
+    if(rupees>=10000000){ w+=lt1000(Math.floor(rupees/10000000))+'Crore '; rupees%=10000000; }
+    if(rupees>=100000)  { w+=lt1000(Math.floor(rupees/100000))+'Lakh ';   rupees%=100000;   }
+    if(rupees>=1000)    { w+=lt1000(Math.floor(rupees/1000))+'Thousand '; rupees%=1000;      }
+    if(rupees>0)        { w+=lt1000(rupees); }
+    w=w.trim()+' Rupees';
+    if(paise>0) w+=' and '+paise+' Paise';
+    return w+' Only';
+}
+function formatDate() {
+    const t = new Date();
+    return t.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+          +' '+t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+function getInvoiceNo() { return 'INV-'+String(currentInvoiceNumber).padStart(4,'0'); }
+
+// ─── UI ───────────────────────────────────────────────────────────────────────
+function updateTotalsUI() {
+    const sub = calculateSubtotal();
+    const {discountAmount, grandTotal} = getDiscountAndGrandTotal(sub);
+    subtotalSpan.textContent      = '₹'+sub.toFixed(2);
+    discountAmountSpan.textContent = discountAmount.toFixed(2);
+    grandTotalSpan.textContent    = '₹'+grandTotal.toFixed(2);
+    amountInWordsSpan.textContent  = numberToWords(grandTotal);
+}
+function updateCustomerDisplay() {
+    displayCustomerName.textContent  = customerNameInput.value.trim()  || 'Guest Customer';
+    displayCustomerPhone.textContent = customerPhoneInput.value.trim() || 'Not Provided';
+}
+function updateInvoiceDisplay() { invoiceNumberDisplay.textContent = getInvoiceNo(); }
+function setBillMetadata() { document.getElementById('billDate').textContent = formatDate(); updateInvoiceDisplay(); }
+
+function renderItemsTable() {
+    if (!items.length) {
+        itemsTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#9ca3af;">No items added. Add items from left panel.</td></tr>';
+        updateTotalsUI(); return;
     }
-    
-    function updateTotalsUI() {
-        const subtotal = calculateSubtotal();
-        const { discountAmount, grandTotal } = getDiscountAndGrandTotal(subtotal);
-        subtotalSpan.innerText = `₹${subtotal.toFixed(2)}`;
-        discountAmountSpan.innerText = discountAmount.toFixed(2);
-        grandTotalSpan.innerText = `₹${grandTotal.toFixed(2)}`;
-        amountInWordsSpan.innerText = numberToWords(grandTotal);
-    }
-    
-    // Number to words function (unchanged)
-    function numberToWords(num) {
-        if (num === 0) return "Zero Rupees Only";
-        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-        const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-        
-        function convertLessThanThousand(n) {
-            if (n === 0) return '';
-            let result = '';
-            if (n >= 100) {
-                result += ones[Math.floor(n / 100)] + ' Hundred ';
-                n %= 100;
-                if (n > 0) result += 'and ';
-            }
-            if (n >= 20) {
-                result += tens[Math.floor(n / 10)] + ' ';
-                n %= 10;
-                if (n > 0) result += ones[n] + ' ';
-            } else if (n >= 10) {
-                result += teens[n - 10] + ' ';
-            } else if (n > 0) {
-                result += ones[n] + ' ';
-            }
-            return result;
-        }
-        
-        let rupees = Math.floor(num);
-        let paise = Math.round((num - rupees) * 100);
-        let words = '';
-        
-        if (rupees >= 10000000) {
-            words += convertLessThanThousand(Math.floor(rupees / 10000000)) + 'Crore ';
-            rupees %= 10000000;
-        }
-        if (rupees >= 100000) {
-            words += convertLessThanThousand(Math.floor(rupees / 100000)) + 'Lakh ';
-            rupees %= 100000;
-        }
-        if (rupees >= 1000) {
-            words += convertLessThanThousand(Math.floor(rupees / 1000)) + 'Thousand ';
-            rupees %= 1000;
-        }
-        if (rupees > 0) {
-            words += convertLessThanThousand(rupees);
-        }
-        
-        words = words.trim() + ' Rupees';
-        if (paise > 0) {
-            words += ' and ' + paise + ' Paise';
-        }
-        words += ' Only';
-        return words;
-    }
-    
-    function updateInvoiceDisplay() {
-        invoiceNumberDisplay.innerText = `INV-${String(currentInvoiceNumber).padStart(4, '0')}`;
-    }
-    
-    function setBillMetadata() {
-        const today = new Date();
-        const formatted = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + today.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
-        document.getElementById('billDate').innerText = formatted;
-        updateInvoiceDisplay();
-    }
-    
-    function updateCustomerDisplay() {
-        let custName = customerNameInput.value.trim();
-        let custPhone = customerPhoneInput.value.trim();
-        displayCustomerNameSpan.innerText = custName === "" ? "Guest Customer" : custName;
-        displayCustomerPhoneSpan.innerText = custPhone === "" ? "Not Provided" : custPhone;
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
+    let html = '';
+    items.forEach((item,idx) => {
+        html += `<tr data-id="${item.id}">
+            <td>${idx+1}</td>
+            <td>${escapeHtml(item.name)}</td>
+            <td style="text-align:right;">
+                <input type="number" min="1" step="1" value="${item.quantity}"
+                    style="width:52px;text-align:center;border:1px solid #d1d5db;border-radius:6px;padding:3px;"
+                    data-id="${item.id}" class="qty-input">
+            </td>
+            <td style="text-align:right;">₹${item.price.toFixed(2)}</td>
+            <td style="text-align:right;">₹${(item.price*item.quantity).toFixed(2)}</td>
+            <td style="text-align:center;">
+                <button data-id="${item.id}" class="remove-btn"
+                    style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:15px;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        </tr>`;
+    });
+    itemsTableBody.innerHTML = html;
+    itemsTableBody.querySelectorAll('.qty-input').forEach(el => {
+        el.addEventListener('change', function() {
+            const id=parseInt(this.dataset.id), q=parseInt(this.value)||1;
+            const it=items.find(i=>i.id===id); if(it){ it.quantity=Math.max(1,q); renderItemsTable(); }
         });
-    }
-    
-    function renderItemsTable() {
-        if (!itemsTableBody) return;
-        if (items.length === 0) {
-            itemsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">No items added. Add items from left panel.</td></tr>';
-            updateTotalsUI();
-            return;
-        }
-        
-        let html = '';
-        items.forEach((item, index) => {
-            const lineTotal = (item.price * item.quantity).toFixed(2);
-            html += `
-                <tr data-item-id="${item.id}">
-                    <td class="text-left">${index + 1}</td>
-                    <td class="text-left">${escapeHtml(item.name)}</td>
-                    <td class="text-right">
-                        <input type="number" min="1" step="1" value="${item.quantity}" class="item-qty-input w-16 text-center border border-gray-300 rounded-md py-1 px-1 focus:ring-1 focus:ring-amber-400" data-id="${item.id}">
-                        <span class="qty-text-for-pdf">${item.quantity}</span>
-                    </td>
-                    <td class="text-right">₹${item.price.toFixed(2)}</td>
-                    <td class="text-right">₹${lineTotal}</td>
-                    <td class="text-center">
-                        <button class="remove-item-btn text-red-500 hover:text-red-700 transition text-lg" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                </tr>
-            `;
+    });
+    itemsTableBody.querySelectorAll('.remove-btn').forEach(el => {
+        el.addEventListener('click', function() {
+            items=items.filter(i=>i.id!==parseInt(this.dataset.id)); renderItemsTable();
         });
-        itemsTableBody.innerHTML = html;
-        
-        // Quantity change events
-        document.querySelectorAll('.item-qty-input').forEach(input => {
-            input.addEventListener('change', function(e) {
-                const id = parseInt(this.getAttribute('data-id'));
-                let newQty = parseInt(this.value);
-                if (isNaN(newQty) || newQty < 1) newQty = 1;
-                const existingItem = items.find(i => i.id === id);
-                if (existingItem) {
-                    existingItem.quantity = newQty;
-                    renderItemsTable();
-                    updateTotalsUI();
-                    updateCustomerDisplay();
-                }
-            });
-        });
-        
-        // Remove button events
-        document.querySelectorAll('.remove-item-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                const id = parseInt(this.getAttribute('data-id'));
-                items = items.filter(i => i.id !== id);
-                renderItemsTable();
-                updateTotalsUI();
-                updateCustomerDisplay();
-            });
-        });
-        
-        updateTotalsUI();
-    }
-    
-    function addItem(name, price, quantity) {
-        if (!name || name.trim() === "") { alert("Please enter item name"); return false; }
-        let priceNum = parseFloat(price);
-        let qtyNum = parseInt(quantity);
-        if (isNaN(priceNum) || priceNum <= 0) { alert("Enter a valid price (>0)"); return false; }
-        if (isNaN(qtyNum) || qtyNum < 1) { alert("Quantity must be at least 1"); return false; }
-        items.push({ id: nextId++, name: name.trim(), price: priceNum, quantity: qtyNum });
-        renderItemsTable();
-        updateTotalsUI();
-        updateCustomerDisplay();
-        return true;
-    }
-    
-    function clearAllItems() {
-        if (items.length > 0 && confirm("⚠️ Remove all items from bill?")) {
-            items = [];
-            renderItemsTable();
-            updateTotalsUI();
-            updateCustomerDisplay();
-        } else if (items.length === 0) alert("No items to clear.");
-    }
-    
-    // Simple WhatsApp message with final total
-    function generateWhatsAppMessage() {
-        const custNameRaw = customerNameInput.value.trim() || "Valued Customer";
-        const invoiceNo = `INV-${String(currentInvoiceNumber).padStart(4, '0')}`;
-        const { grandTotal } = getDiscountAndGrandTotal(calculateSubtotal());
-        return `🎉 *Thank you for shopping at Elevate Mens Wear!* 🎉\n\nDear ${custNameRaw},\n\nYour invoice: ${invoiceNo}\nTotal Amount: ₹${grandTotal.toFixed(2)}\n\nWe appreciate your visit! 😊\n\n*Exchange Policy:* Cloth must be exchanged within 2 days with original bill. No refunds.\n\n✨ Visit again! ✨`;
-    }
-    
-    // FIXED: Generate PDF as Blob for sharing
-    async function generatePDFBlob() {
-        const element = document.getElementById('billForPDF');
-        
-        // Add pdf-mode class to hide inputs and show text
-        element.classList.add('pdf-mode');
-        
-        // Wait for layout to settle
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const opt = {
-            margin:        [0.5, 0.5, 0.5, 0.5],
-            filename:     `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, letterRendering: true, useCORS: true },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-        
-        try {
-            // Generate PDF as blob
-            const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
-            
-            // Remove pdf-mode class
-            element.classList.remove('pdf-mode');
-            
-            return pdfBlob;
-        } catch (error) {
-            element.classList.remove('pdf-mode');
-            throw error;
-        }
-    }
-    
-    // FIXED: Send WhatsApp with PDF attachment
-    async function sendWhatsAppBill() {
-        let phone = customerPhoneInput.value.trim();
-        if (!phone) {
-            alert("❌ Please enter customer's WhatsApp number.\n\n(Enter 10-digit mobile number, e.g., 9876543210)");
-            return;
-        }
-        
-        let cleanPhone = phone.replace(/[\s-]/g, '');
-        if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
-        if (/^\d{10}$/.test(cleanPhone)) {
-            cleanPhone = '+91' + cleanPhone;
-        } else if (/^91\d{10}$/.test(cleanPhone)) {
-            cleanPhone = '+' + cleanPhone;
-        } else if (!cleanPhone.match(/^\+[1-9]\d{6,14}$/)) {
-            alert("⚠️ Please enter a valid 10-digit Indian mobile number (e.g., 9876543210) or include country code (e.g., +919876543210).");
-            return;
-        }
-        
-        if (!cleanPhone.match(/^\+[1-9][0-9]{6,14}$/)) {
-            alert("⚠️ Invalid phone number format. Please enter a valid mobile number.");
-            return;
-        }
-        
-        if (items.length === 0) {
-            alert("Cannot send empty bill. Please add at least one item.");
-            return;
-        }
-        
-        try {
-            // Show loading message
-            sendWhatsappBtn.disabled = true;
-            sendWhatsappBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
-            
-            // Generate PDF
-            const pdfBlob = await generatePDFBlob();
-            const fileName = `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`;
-            const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-            
-            const messageText = generateWhatsAppMessage();
-            
-            // Check if Web Share API is available and can share files
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                try {
-                    await navigator.share({
-                        title: 'Invoice - Elevate Mens Wear',
-                        text: messageText,
-                        files: [pdfFile]
-                    });
-                    alert('✅ Invoice shared successfully via WhatsApp!');
-                } catch (shareError) {
-                    if (shareError.name !== 'AbortError') {
-                        console.error('Share failed:', shareError);
-                        fallbackWhatsAppShare(messageText, cleanPhone, pdfBlob, fileName);
-                    }
-                }
+    });
+    updateTotalsUI();
+}
+
+// ─── ITEMS ────────────────────────────────────────────────────────────────────
+function addItem(name, price, qty) {
+    if (!name||!name.trim()) { alert('Please enter item name'); return false; }
+    const p=parseFloat(price), q=parseInt(qty);
+    if (isNaN(p)||p<=0) { alert('Enter a valid price (>0)'); return false; }
+    if (isNaN(q)||q<1)  { alert('Quantity must be at least 1'); return false; }
+    items.push({id:nextId++, name:name.trim(), price:p, quantity:q});
+    renderItemsTable(); updateCustomerDisplay(); return true;
+}
+function clearAllItems() {
+    if (!items.length) { alert('No items to clear.'); return; }
+    if (confirm('Remove all items from bill?')) { items=[]; renderItemsTable(); updateCustomerDisplay(); }
+}
+
+// ─── PDF WITH jsPDF (draws directly — never uses html2canvas) ─────────────────
+function generatePDFBlob() {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pw   = 210;   // page width mm
+    const ml   = 12;    // margin left
+    const mr   = 12;    // margin right
+    const cw   = pw - ml - mr;  // content width
+    let   y    = 14;    // current Y cursor
+
+    const custName  = customerNameInput.value.trim()  || 'Guest Customer';
+    const custPhone = customerPhoneInput.value.trim() || 'Not Provided';
+    const invoiceNo = getInvoiceNo();
+    const dateStr   = formatDate();
+    const subtotal  = calculateSubtotal();
+    const { discountAmount, grandTotal } = getDiscountAndGrandTotal(subtotal);
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function setFont(style, size) { doc.setFont('helvetica', style); doc.setFontSize(size); }
+    function textColor(r,g,b)     { doc.setTextColor(r,g,b); }
+    function drawColor(r,g,b)     { doc.setDrawColor(r,g,b); }
+    function fillColor(r,g,b)     { doc.setFillColor(r,g,b); }
+    function line(x1,y1,x2,y2,lw){ doc.setLineWidth(lw||0.3); doc.line(x1,y1,x2,y2); }
+    function rect(x,yy,w,h,style) { doc.rect(x,yy,w,h,style); }
+
+    // ── HEADER ────────────────────────────────────────────────────────────────
+    // Shop name
+    setFont('bold', 18); textColor(17,24,39);
+    doc.text('ELEVATE MENS WEAR', ml, y);
+
+    // TAX INVOICE right
+    setFont('bold', 14); textColor(17,24,39);
+    doc.text('TAX INVOICE', pw - mr, y, { align: 'right' });
+    y += 6;
+
+    // Address
+    setFont('normal', 9); textColor(75,85,99);
+    doc.text('Shop no 1, Harinagr Road, Neelbadh, Bhopal - 462044', ml, y);
+    setFont('normal', 9); textColor(17,24,39);
+    doc.text('Invoice No: '+invoiceNo, pw - mr, y, { align: 'right' });
+    y += 5;
+
+    doc.text('Ph: +91 62687 50075', ml, y);
+    doc.text('Date: '+dateStr, pw - mr, y, { align: 'right' });
+    y += 4;
+
+    setFont('normal', 8); textColor(156,163,175);
+    doc.text('(Premium Menswear since 2025)', ml, y);
+    y += 6;
+
+    // Header divider
+    drawColor(55,65,81); line(ml, y, pw-mr, y, 0.6); y += 5;
+
+    // ── CUSTOMER ROW ─────────────────────────────────────────────────────────
+    fillColor(249,250,251); drawColor(229,231,235);
+    rect(ml, y, cw, 9, 'FD');
+    setFont('bold', 9); textColor(17,24,39);
+    doc.text('Customer Name: ', ml+3, y+6);
+    setFont('normal', 9);
+    doc.text(custName, ml+3+doc.getTextWidth('Customer Name: '), y+6);
+
+    setFont('bold', 9);
+    const midX = ml + cw/2 - 10;
+    doc.text('Mobile No.: ', midX, y+6);
+    setFont('normal', 9);
+    doc.text(custPhone, midX+doc.getTextWidth('Mobile No.: '), y+6);
+
+    setFont('bold', 9);
+    doc.text('Order Type: Walk-in', pw-mr-3, y+6, { align:'right' });
+    y += 14;
+
+    // ── ITEMS TABLE ───────────────────────────────────────────────────────────
+    // Column definitions: [label, x, width, align]
+    const cols = [
+        { h:'Sl.No',        x:ml,        w:14,  a:'left'  },
+        { h:'Particulars',  x:ml+14,     w:72,  a:'left'  },
+        { h:'Qty',          x:ml+86,     w:18,  a:'right' },
+        { h:'Rate (Rs.)',   x:ml+104,    w:38,  a:'right' },
+        { h:'Amount (Rs.)', x:ml+142,    w:44,  a:'right' },
+    ];
+    const tableRight = ml + 186;
+    const rowH = 8;
+
+    // Header row
+    fillColor(243,244,246); drawColor(209,213,219);
+    rect(ml, y, cw, rowH, 'FD');
+    setFont('bold', 9); textColor(17,24,39);
+    cols.forEach(c => {
+        const tx = c.a==='right' ? c.x+c.w-2 : c.x+2;
+        doc.text(c.h, tx, y+5.5, { align: c.a });
+    });
+    // vertical lines in header
+    drawColor(209,213,219);
+    let cx = ml;
+    cols.forEach(c => { line(cx, y, cx, y+rowH, 0.2); cx+=c.w; });
+    line(tableRight, y, tableRight, y+rowH, 0.2);
+    line(ml, y, tableRight, y, 0.2);
+    line(ml, y+rowH, tableRight, y+rowH, 0.2);
+    y += rowH;
+
+    // Data rows
+    setFont('normal', 9); textColor(31,41,55);
+    items.forEach((item, idx) => {
+        const amt = (item.price * item.quantity).toFixed(2);
+        const vals = [
+            String(idx+1),
+            item.name,
+            String(item.quantity),
+            'Rs.'+item.price.toFixed(2),
+            'Rs.'+amt
+        ];
+        // bg alternate
+        if (idx%2===0) { fillColor(255,255,255); } else { fillColor(249,250,251); }
+        drawColor(209,213,219);
+        rect(ml, y, cw, rowH, 'F');
+
+        cols.forEach((c,ci) => {
+            const v  = vals[ci];
+            const tx = c.a==='right' ? c.x+c.w-2 : c.x+2;
+            // clip long text for Particulars column
+            if (ci===1 && doc.getTextWidth(v) > c.w-4) {
+                doc.text(v, tx, y+5.5, { align:'left', maxWidth: c.w-4 });
             } else {
-                // Fallback: Download PDF and open WhatsApp
-                fallbackWhatsAppShare(messageText, cleanPhone, pdfBlob, fileName);
+                doc.text(v, tx, y+5.5, { align: c.a });
             }
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            alert('❌ Error generating PDF. Please try again.');
-        } finally {
-            // Reset button
-            sendWhatsappBtn.disabled = false;
-            sendWhatsappBtn.innerHTML = '<i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp';
-        }
-    }
-    
-    // Fallback function when Web Share API is not available
-    function fallbackWhatsAppShare(messageText, cleanPhone, pdfBlob, fileName) {
-        // Download the PDF
-        const downloadUrl = URL.createObjectURL(pdfBlob);
-        const downloadLink = document.createElement('a');
-        downloadLink.href = downloadUrl;
-        downloadLink.download = fileName;
-        downloadLink.click();
-        URL.revokeObjectURL(downloadUrl);
-        
-        // Open WhatsApp with message
-        const encodedMsg = encodeURIComponent(messageText + '\n\n📎 Please attach the downloaded PDF invoice.');
-        let waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
-        
-        setTimeout(() => {
-            window.open(waUrl, '_blank');
-            alert('📥 PDF downloaded! Opening WhatsApp...\n\n✅ Please attach the downloaded PDF to your WhatsApp message.');
-        }, 500);
-    }
-    
-    // FIXED: Download PDF with proper content
-    async function generateAndDownloadPDF() {
-        if (items.length === 0) {
-            alert("Cannot generate PDF for empty bill. Please add items.");
-            return;
-        }
-        
-        try {
-            // Show loading
-            downloadPdfBtn.disabled = true;
-            downloadPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-            
-            // Increment invoice counter
-            currentInvoiceNumber++;
-            localStorage.setItem('elevate_invoice_counter', currentInvoiceNumber);
-            updateInvoiceDisplay();
-            
-            // Generate and download PDF
-            const pdfBlob = await generatePDFBlob();
-            const fileName = `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`;
-            
-            // Download the PDF
-            const downloadUrl = URL.createObjectURL(pdfBlob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = downloadUrl;
-            downloadLink.download = fileName;
-            downloadLink.click();
-            URL.revokeObjectURL(downloadUrl);
-            
-            alert(`✅ PDF bill generated!\n\nInvoice #INV-${String(currentInvoiceNumber).padStart(4, '0')} saved successfully.`);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            alert('❌ Error generating PDF. Please try again.');
-        } finally {
-            // Reset button
-            downloadPdfBtn.disabled = false;
-            downloadPdfBtn.innerHTML = '<i class="fas fa-file-pdf text-xl"></i> Download PDF Bill';
-        }
-    }
-    
-    function fullRefresh() {
-        renderItemsTable();
-        updateTotalsUI();
-        updateCustomerDisplay();
-        setBillMetadata();
-    }
-    
-    function handleAddCustomItem() {
-        const name = document.getElementById('itemName').value;
-        const price = document.getElementById('itemPrice').value;
-        const qty = document.getElementById('itemQty').value;
-        if (addItem(name, price, qty)) {
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemPrice').value = '';
-            document.getElementById('itemQty').value = '1';
-        }
-    }
-    
-    function setupQuickAdd() {
-        quickBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const itemName = btn.getAttribute('data-quick');
-                const itemPrice = btn.getAttribute('data-price');
-                if (itemName && itemPrice) {
-                    addItem(itemName, parseFloat(itemPrice), 1);
-                }
-            });
         });
+        // borders
+        cx = ml;
+        cols.forEach(c => { line(cx, y, cx, y+rowH, 0.2); cx+=c.w; });
+        line(tableRight, y, tableRight, y+rowH, 0.2);
+        line(ml, y+rowH, tableRight, y+rowH, 0.2);
+        y += rowH;
+    });
+    // bottom border of table
+    drawColor(55,65,81); line(ml, y, tableRight, y, 0.5);
+    y += 8;
+
+    // ── TOTALS ────────────────────────────────────────────────────────────────
+    const totX  = pw - mr - 75;
+    const totW  = 75;
+    const totLX = totX + 2;
+    const totRX = pw - mr - 2;
+
+    setFont('normal', 9); textColor(55,65,81);
+    doc.text('Subtotal :', totLX, y);
+    doc.text('Rs.'+subtotal.toFixed(2), totRX, y, {align:'right'});
+    y += 6;
+
+    textColor(5,150,105);
+    doc.text('Discount (Override) :', totLX, y);
+    doc.text('- Rs.'+discountAmount.toFixed(2), totRX, y, {align:'right'});
+    y += 2;
+
+    // Grand total line
+    drawColor(17,24,39); line(totX, y, pw-mr, y, 0.5); y += 5;
+    setFont('bold', 11); textColor(17,24,39);
+    doc.text('GRAND TOTAL :', totLX, y);
+    doc.text('Rs.'+grandTotal.toFixed(2), totRX, y, {align:'right'});
+    y += 6;
+
+    // Amount in words
+    setFont('normal', 8); textColor(107,114,128);
+    const words = numberToWords(grandTotal);
+    doc.text('Amount in words : '+words, ml, y);
+    y += 10;
+
+    // ── FOOTER ────────────────────────────────────────────────────────────────
+    drawColor(156,163,175); doc.setLineDash([2,2]); line(ml, y, pw-mr, y, 0.3);
+    doc.setLineDash([]); y += 6;
+
+    setFont('bold', 9); textColor(17,24,39);
+    doc.text('Exchange Policy:', pw/2, y, {align:'center'}); y += 5;
+    setFont('normal', 8); textColor(75,85,99);
+    doc.text('Cloth must be exchanged within 2 days of purchase with original bill. No refunds.', pw/2, y, {align:'center'}); y += 5;
+    setFont('normal', 8); textColor(107,114,128);
+    doc.text('* This is a computer generated invoice - no signature required *', pw/2, y, {align:'center'}); y += 5;
+    setFont('bold', 8); textColor(17,24,39);
+    doc.text('Thank you for shopping with Elevate Mens Wear!', pw/2, y, {align:'center'});
+
+    return doc.output('blob');
+}
+
+// ─── DOWNLOAD PDF ─────────────────────────────────────────────────────────────
+function generateAndDownloadPDF() {
+    if (!items.length) { alert('Cannot generate PDF for empty bill. Please add at least one item.'); return; }
+    try {
+        downloadPdfBtn.disabled = true;
+        downloadPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+        currentInvoiceNumber++;
+        localStorage.setItem('elevate_invoice_counter', String(currentInvoiceNumber));
+        updateInvoiceDisplay();
+
+        const blob     = generatePDFBlob();
+        const invoiceNo = getInvoiceNo();
+        const url      = URL.createObjectURL(blob);
+        const a        = document.createElement('a');
+        a.href = url; a.download = 'Elevate_Invoice_'+invoiceNo+'.pdf';
+        a.click(); URL.revokeObjectURL(url);
+        alert('PDF bill generated!\nInvoice '+invoiceNo+' saved successfully.');
+    } catch(e) {
+        console.error(e); alert('Error generating PDF: '+e.message);
+    } finally {
+        downloadPdfBtn.disabled = false;
+        downloadPdfBtn.innerHTML = '<i class="fas fa-file-pdf text-xl"></i> Download PDF Bill';
     }
-    
-    function bindCustomerLiveUpdate() {
-        customerNameInput.addEventListener('input', updateCustomerDisplay);
-        customerPhoneInput.addEventListener('input', updateCustomerDisplay);
+}
+
+// ─── WHATSAPP ─────────────────────────────────────────────────────────────────
+function generateWhatsAppMessage() {
+    const name = customerNameInput.value.trim() || 'Valued Customer';
+    const { grandTotal } = getDiscountAndGrandTotal(calculateSubtotal());
+    return '*Thank you for shopping at Elevate Mens Wear!*\n\nDear '+name+',\n\nYour invoice: '+getInvoiceNo()+'\nTotal Amount: Rs. '+grandTotal.toFixed(2)+'\n\nWe appreciate your visit!\n\n*Exchange Policy:* Cloth must be exchanged within 2 days with original bill. No refunds.\n\nVisit again!';
+}
+
+function fallbackWhatsApp(msgText, phone, blob, fileName) {
+    const url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=fileName; a.click(); URL.revokeObjectURL(url);
+    setTimeout(()=>{
+        window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msgText+'\n\nPlease attach the downloaded PDF invoice.'),'_blank');
+        alert('PDF downloaded!\nOpening WhatsApp...\nPlease attach the PDF to your message.');
+    },600);
+}
+
+async function sendWhatsAppBill() {
+    let phone = customerPhoneInput.value.trim();
+    if (!phone) { alert('Please enter the customer\'s WhatsApp number.'); return; }
+    let clean = phone.replace(/[\s-]/g,'');
+    if (clean.startsWith('0')) clean=clean.substring(1);
+    if (/^\d{10}$/.test(clean))        clean='+91'+clean;
+    else if (/^91\d{10}$/.test(clean)) clean='+'+clean;
+    else if (!clean.match(/^\+[1-9]\d{6,14}$/)) { alert('Please enter a valid 10-digit Indian mobile number.'); return; }
+    if (!items.length) { alert('Cannot send empty bill. Please add at least one item.'); return; }
+
+    try {
+        sendWhatsappBtn.disabled=true;
+        sendWhatsappBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+        const blob     = generatePDFBlob();
+        const invoiceNo = getInvoiceNo();
+        const fileName = 'Elevate_Invoice_'+invoiceNo+'.pdf';
+        const file     = new File([blob], fileName, {type:'application/pdf'});
+        const msg      = generateWhatsAppMessage();
+        if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+            try { await navigator.share({title:'Invoice - Elevate Mens Wear', text:msg, files:[file]}); alert('Invoice shared via WhatsApp!'); }
+            catch(e) { if(e.name!=='AbortError') fallbackWhatsApp(msg,clean,blob,fileName); }
+        } else { fallbackWhatsApp(msg,clean,blob,fileName); }
+    } catch(e) { console.error(e); alert('Error: '+e.message); }
+    finally {
+        sendWhatsappBtn.disabled=false;
+        sendWhatsappBtn.innerHTML='<i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp';
     }
-    
-    function bindActions() {
-        clearAllBtn.addEventListener('click', clearAllItems);
-        refreshBillBtn.addEventListener('click', () => fullRefresh());
-        addItemBtn.addEventListener('click', handleAddCustomItem);
-        sendWhatsappBtn.addEventListener('click', sendWhatsAppBill);
-        downloadPdfBtn.addEventListener('click', generateAndDownloadPDF);
-        sellAtPriceInput.addEventListener('input', () => updateTotalsUI());
-    }
-    
-    function init() {
-        setBillMetadata();
-        items = [];
-        nextId = 1;
-        renderItemsTable();
-        updateTotalsUI();
-        updateCustomerDisplay();
-        setupQuickAdd();
-        bindActions();
-        bindCustomerLiveUpdate();
-    }
-    
-    init();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+    setBillMetadata(); renderItemsTable(); updateTotalsUI(); updateCustomerDisplay();
+
+    quickBtns.forEach(btn => btn.addEventListener('click', () =>
+        addItem(btn.dataset.quick, parseFloat(btn.dataset.price), 1)));
+
+    addItemBtn.addEventListener('click', () => {
+        const n=document.getElementById('itemName').value,
+              p=document.getElementById('itemPrice').value,
+              q=document.getElementById('itemQty').value;
+        if (addItem(n,p,q)) {
+            document.getElementById('itemName').value='';
+            document.getElementById('itemPrice').value='';
+            document.getElementById('itemQty').value='1';
+        }
+    });
+    ['itemName','itemPrice','itemQty'].forEach(id =>
+        document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') addItemBtn.click(); }));
+
+    clearAllBtn.addEventListener('click', clearAllItems);
+    refreshBillBtn.addEventListener('click', ()=>{ setBillMetadata(); renderItemsTable(); updateCustomerDisplay(); updateTotalsUI(); });
+    downloadPdfBtn.addEventListener('click', generateAndDownloadPDF);
+    sendWhatsappBtn.addEventListener('click', sendWhatsAppBill);
+    sellAtPriceInput.addEventListener('input', updateTotalsUI);
+    customerNameInput.addEventListener('input', updateCustomerDisplay);
+    customerPhoneInput.addEventListener('input', updateCustomerDisplay);
+}
+
+init();
 </script>
 </body>
 </html>
