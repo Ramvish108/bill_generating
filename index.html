@@ -30,11 +30,22 @@
             font-weight: 600;
         }
         
+        /* Hide inputs in PDF, show text spans */
         @media print {
             body * { visibility: hidden; }
             #billForPDF, #billForPDF * { visibility: visible; }
             #billForPDF { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; background: white; }
+            .item-qty-input { display: none !important; }
+            .qty-text-for-pdf { display: inline !important; }
+            .remove-item-btn { display: none !important; }
         }
+        
+        /* For PDF generation: hide inputs, show text */
+        .pdf-mode .item-qty-input { display: none !important; }
+        .pdf-mode .qty-text-for-pdf { display: inline !important; }
+        .pdf-mode .remove-item-btn { display: none !important; }
+        
+        .qty-text-for-pdf { display: none; }
     </style>
 </head>
 <body class="font-sans antialiased p-4 md:p-6">
@@ -358,6 +369,7 @@
                     <td class="text-left">${escapeHtml(item.name)}</td>
                     <td class="text-right">
                         <input type="number" min="1" step="1" value="${item.quantity}" class="item-qty-input w-16 text-center border border-gray-300 rounded-md py-1 px-1 focus:ring-1 focus:ring-amber-400" data-id="${item.id}">
+                        <span class="qty-text-for-pdf">${item.quantity}</span>
                     </td>
                     <td class="text-right">₹${item.price.toFixed(2)}</td>
                     <td class="text-right">₹${lineTotal}</td>
@@ -429,12 +441,46 @@
         return `🎉 *Thank you for shopping at Elevate Mens Wear!* 🎉\n\nDear ${custNameRaw},\n\nYour invoice: ${invoiceNo}\nTotal Amount: ₹${grandTotal.toFixed(2)}\n\nWe appreciate your visit! 😊\n\n*Exchange Policy:* Cloth must be exchanged within 2 days with original bill. No refunds.\n\n✨ Visit again! ✨`;
     }
     
-    function sendWhatsAppBill() {
+    // FIXED: Generate PDF as Blob for sharing
+    async function generatePDFBlob() {
+        const element = document.getElementById('billForPDF');
+        
+        // Add pdf-mode class to hide inputs and show text
+        element.classList.add('pdf-mode');
+        
+        // Wait for layout to settle
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const opt = {
+            margin:        [0.5, 0.5, 0.5, 0.5],
+            filename:     `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, letterRendering: true, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        
+        try {
+            // Generate PDF as blob
+            const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+            
+            // Remove pdf-mode class
+            element.classList.remove('pdf-mode');
+            
+            return pdfBlob;
+        } catch (error) {
+            element.classList.remove('pdf-mode');
+            throw error;
+        }
+    }
+    
+    // FIXED: Send WhatsApp with PDF attachment
+    async function sendWhatsAppBill() {
         let phone = customerPhoneInput.value.trim();
         if (!phone) {
             alert("❌ Please enter customer's WhatsApp number.\n\n(Enter 10-digit mobile number, e.g., 9876543210)");
             return;
         }
+        
         let cleanPhone = phone.replace(/[\s-]/g, '');
         if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
         if (/^\d{10}$/.test(cleanPhone)) {
@@ -445,43 +491,116 @@
             alert("⚠️ Please enter a valid 10-digit Indian mobile number (e.g., 9876543210) or include country code (e.g., +919876543210).");
             return;
         }
+        
         if (!cleanPhone.match(/^\+[1-9][0-9]{6,14}$/)) {
             alert("⚠️ Invalid phone number format. Please enter a valid mobile number.");
             return;
         }
+        
         if (items.length === 0) {
             alert("Cannot send empty bill. Please add at least one item.");
             return;
         }
-        const messageText = generateWhatsAppMessage();
-        const encodedMsg = encodeURIComponent(messageText);
-        let waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
-        window.open(waUrl, '_blank');
+        
+        try {
+            // Show loading message
+            sendWhatsappBtn.disabled = true;
+            sendWhatsappBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            
+            // Generate PDF
+            const pdfBlob = await generatePDFBlob();
+            const fileName = `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`;
+            const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            
+            const messageText = generateWhatsAppMessage();
+            
+            // Check if Web Share API is available and can share files
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                try {
+                    await navigator.share({
+                        title: 'Invoice - Elevate Mens Wear',
+                        text: messageText,
+                        files: [pdfFile]
+                    });
+                    alert('✅ Invoice shared successfully via WhatsApp!');
+                } catch (shareError) {
+                    if (shareError.name !== 'AbortError') {
+                        console.error('Share failed:', shareError);
+                        fallbackWhatsAppShare(messageText, cleanPhone, pdfBlob, fileName);
+                    }
+                }
+            } else {
+                // Fallback: Download PDF and open WhatsApp
+                fallbackWhatsAppShare(messageText, cleanPhone, pdfBlob, fileName);
+            }
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('❌ Error generating PDF. Please try again.');
+        } finally {
+            // Reset button
+            sendWhatsappBtn.disabled = false;
+            sendWhatsappBtn.innerHTML = '<i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp';
+        }
     }
     
-    function generateAndDownloadPDF() {
+    // Fallback function when Web Share API is not available
+    function fallbackWhatsAppShare(messageText, cleanPhone, pdfBlob, fileName) {
+        // Download the PDF
+        const downloadUrl = URL.createObjectURL(pdfBlob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.download = fileName;
+        downloadLink.click();
+        URL.revokeObjectURL(downloadUrl);
+        
+        // Open WhatsApp with message
+        const encodedMsg = encodeURIComponent(messageText + '\n\n📎 Please attach the downloaded PDF invoice.');
+        let waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
+        
+        setTimeout(() => {
+            window.open(waUrl, '_blank');
+            alert('📥 PDF downloaded! Opening WhatsApp...\n\n✅ Please attach the downloaded PDF to your WhatsApp message.');
+        }, 500);
+    }
+    
+    // FIXED: Download PDF with proper content
+    async function generateAndDownloadPDF() {
         if (items.length === 0) {
             alert("Cannot generate PDF for empty bill. Please add items.");
             return;
         }
-        // Increment invoice counter
-        currentInvoiceNumber++;
-        localStorage.setItem('elevate_invoice_counter', currentInvoiceNumber);
-        updateInvoiceDisplay();
         
-        const element = document.getElementById('billForPDF');
-        // Force a short delay to ensure all content is fully rendered (especially input values)
-        setTimeout(() => {
-            const opt = {
-                margin:        [0.5, 0.5, 0.5, 0.5],
-                filename:     `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, letterRendering: true },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
-            alert(`PDF bill generated! Invoice #INV-${String(currentInvoiceNumber).padStart(4, '0')} saved.`);
-        }, 200);
+        try {
+            // Show loading
+            downloadPdfBtn.disabled = true;
+            downloadPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            // Increment invoice counter
+            currentInvoiceNumber++;
+            localStorage.setItem('elevate_invoice_counter', currentInvoiceNumber);
+            updateInvoiceDisplay();
+            
+            // Generate and download PDF
+            const pdfBlob = await generatePDFBlob();
+            const fileName = `Elevate_Invoice_INV-${String(currentInvoiceNumber).padStart(4, '0')}.pdf`;
+            
+            // Download the PDF
+            const downloadUrl = URL.createObjectURL(pdfBlob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = downloadUrl;
+            downloadLink.download = fileName;
+            downloadLink.click();
+            URL.revokeObjectURL(downloadUrl);
+            
+            alert(`✅ PDF bill generated!\n\nInvoice #INV-${String(currentInvoiceNumber).padStart(4, '0')} saved successfully.`);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('❌ Error generating PDF. Please try again.');
+        } finally {
+            // Reset button
+            downloadPdfBtn.disabled = false;
+            downloadPdfBtn.innerHTML = '<i class="fas fa-file-pdf text-xl"></i> Download PDF Bill';
+        }
     }
     
     function fullRefresh() {
