@@ -587,36 +587,89 @@ function fallbackWhatsApp(msgText, phone, blob, fileName) {
         alert('PDF downloaded!\nOpening WhatsApp...\nPlease attach the PDF to your message.');
     },600);
 }
-
 async function sendWhatsAppBill() {
     let phone = customerPhoneInput.value.trim();
-    if (!phone) { alert('Please enter the customer\'s WhatsApp number.'); return; }
+    if (!phone) { 
+        alert('Please enter the customer\'s WhatsApp number.'); 
+        return; 
+    }
+    
+    // Format phone number
     let clean = phone.replace(/[\s-]/g,'');
-    if (clean.startsWith('0')) clean=clean.substring(1);
-    if (/^\d{10}$/.test(clean))        clean='+91'+clean;
-    else if (/^91\d{10}$/.test(clean)) clean='+'+clean;
-    else if (!clean.match(/^\+[1-9]\d{6,14}$/)) { alert('Please enter a valid 10-digit Indian mobile number.'); return; }
-    if (!items.length) { alert('Cannot send empty bill. Please add at least one item.'); return; }
+    if (clean.startsWith('0')) clean = clean.substring(1);
+    if (/^\d{10}$/.test(clean)) clean = '+91' + clean;
+    else if (/^91\d{10}$/.test(clean)) clean = '+' + clean;
+    else if (!clean.match(/^\+[1-9]\d{6,14}$/)) { 
+        alert('Please enter a valid 10-digit Indian mobile number.'); 
+        return; 
+    }
+    
+    if (!items.length) { 
+        alert('Cannot send empty bill. Please add at least one item.'); 
+        return; 
+    }
 
     try {
-        sendWhatsappBtn.disabled=true;
-        sendWhatsappBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
-        const blob     = generatePDFBlob();
+        sendWhatsappBtn.disabled = true;
+        sendWhatsappBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+        
+        // Generate PDF blob
+        const blob = await generatePDFBlob();
         const invoiceNo = getInvoiceNo();
-        const fileName = 'Elevate_Invoice_'+invoiceNo+'.pdf';
-        const file     = new File([blob], fileName, {type:'application/pdf'});
-        const msg      = generateWhatsAppMessage();
-        if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-            try { await navigator.share({title:'Invoice - Elevate Mens Wear', text:msg, files:[file]}); alert('Invoice shared via WhatsApp!'); }
-            catch(e) { if(e.name!=='AbortError') fallbackWhatsApp(msg,clean,blob,fileName); }
-        } else { fallbackWhatsApp(msg,clean,blob,fileName); }
-    } catch(e) { console.error(e); alert('Error: '+e.message); }
-    finally {
-        sendWhatsappBtn.disabled=false;
-        sendWhatsappBtn.innerHTML='<i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp';
+        const fileName = 'Elevate_Invoice_' + invoiceNo + '.pdf';
+        
+        // Create message
+        const name = customerNameInput.value.trim() || 'Valued Customer';
+        const { grandTotal } = getDiscountAndGrandTotal(calculateSubtotal());
+        const message = `*Thank you for shopping at Elevate Mens Wear!*%0a%0aDear ${encodeURIComponent(name)},%0a%0aYour invoice: ${invoiceNo}%0aTotal Amount: Rs. ${grandTotal.toFixed(2)}%0a%0aWe appreciate your visit!%0a%0a*Exchange Policy:* Cloth must be exchanged within 2 days with original bill. No refunds.%0a%0aVisit again!`;
+        
+        // Create a temporary link to download PDF first
+        const url = URL.createObjectURL(blob);
+        
+        // Method 1: Direct WhatsApp API with PDF (opens WhatsApp with instruction to attach)
+        const whatsappUrl = `https://wa.me/${clean}?text=${message}%0a%0a📄 *Your PDF invoice is attached below*`;
+        
+        // Open WhatsApp in new tab
+        window.open(whatsappUrl, '_blank');
+        
+        // Download PDF for user to attach
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            alert(`✅ Invoice generated successfully!\n\n📱 WhatsApp opened for ${phone}\n📄 PDF downloaded: ${fileName}\n\nPlease attach the PDF file to the WhatsApp message before sending.`);
+        }, 1000);
+        
+        // Increment invoice number
+        currentInvoiceNumber++;
+        localStorage.setItem('elevate_invoice_counter', String(currentInvoiceNumber));
+        updateInvoiceDisplay();
+        
+    } catch(e) { 
+        console.error(e); 
+        alert('Error: ' + e.message); 
+    } finally {
+        sendWhatsappBtn.disabled = false;
+        sendWhatsappBtn.innerHTML = '<i class="fab fa-whatsapp text-xl"></i> Send Bill via WhatsApp';
     }
 }
 
+function generatePDFDataUrl() {
+    return new Promise((resolve, reject) => {
+        try {
+            const blob = generatePDFBlob();
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        } catch(e) {
+            reject(e);
+        }
+    });
+}
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
     setBillMetadata(); renderItemsTable(); updateTotalsUI(); updateCustomerDisplay();
